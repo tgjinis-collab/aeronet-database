@@ -34,6 +34,7 @@ const { body, param, query, validationResult } = require("express-validator");
 const morgan     = require("morgan");
 const helmet     = require("helmet");
 const cors       = require("cors");
+const path = require("path");
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -1356,6 +1357,11 @@ app.use((err, _req, res, _next) => {
   console.error("Unhandled error:", err);
   res.status(500).json({ success: false, message: "Internal server error." });
 });
+
+app.get("/", (_req, res) => {
+  res.sendFile(path.join(__dirname, "index.html"));
+});
+
 
 // 404
 app.use((_req, res) => {
