@@ -136,8 +136,9 @@ async function logAudit(empId, actionType, entityType, entityId, outcome = "SUCC
 app.get("/health", async (_req, res) => {
   try {
     await pgPool.query("SELECT 1");
-    await mongoDB.command({ ping: 1 });
-    res.json({ success: true, postgres: "ok", mongodb: "ok" });
+    const mongoStatus = mongoDB ? "ok" : "unavailable";
+    if (mongoDB) await mongoDB.command({ ping: 1 });
+    res.json({ success: true, postgres: "ok", mongodb: mongoStatus });
   } catch (err) {
     res.status(503).json({ success: false, message: err.message });
   }
