@@ -1367,14 +1367,18 @@ app.use((_req, res) => {
 
 (async () => {
   try {
-    await connectMongo();
-    await pgPool.query("SELECT 1"); // verify PG
+    await pgPool.query("SELECT 1");
     console.log("✓ PostgreSQL connected");
-    app.listen(PORT, () => console.log(`✓ AeroNetB API running on port ${PORT}`));
   } catch (err) {
     console.error("Startup failed:", err.message);
     process.exit(1);
   }
-})();
 
-module.exports = app;
+  try {
+    await connectMongo();
+  } catch (err) {
+    console.warn("⚠ MongoDB unavailable — document features disabled:", err.message);
+  }
+
+  app.listen(PORT, () => console.log(`✓ AeroNetB API running on port ${PORT}`));
+})();
