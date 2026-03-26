@@ -4,185 +4,123 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>AeroNetB — Operations Dashboard</title>
-<link href="https://fonts.googleapis.com/css2?family=Space+Mono:ital,wght@0,400;0,700;1,400&family=Syne:wght@400;500;600;700;800&display=swap" rel="stylesheet"/>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"/>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
-/* ── RESET & TOKENS ──────────────────────────────────────────────────── */
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg0:#060a12;
-  --bg1:#0b1120;
-  --bg2:#111827;
-  --bg3:#1a2235;
-  --bg4:#212d42;
-  --line:#1e2d45;
-  --line2:#2a3d58;
-  --text1:#e8edf5;
-  --text2:#8fa3bf;
-  --text3:#4d6480;
-  --blue:#3b82f6;
-  --blue-dim:#1d4ed8;
-  --cyan:#06b6d4;
-  --amber:#f59e0b;
-  --green:#10b981;
-  --red:#ef4444;
-  --purple:#8b5cf6;
-  --orange:#f97316;
-  --glow-blue:0 0 20px rgba(59,130,246,.25);
-  --glow-cyan:0 0 20px rgba(6,182,212,.2);
+  --bg0:#060a12;--bg1:#0b1120;--bg2:#111827;--bg3:#1a2235;--bg4:#212d42;
+  --line:#1e2d45;--line2:#2a3d58;
+  --text1:#e8edf5;--text2:#8fa3bf;--text3:#4d6480;
+  --blue:#3b82f6;--blue-dim:#1d4ed8;--cyan:#06b6d4;
+  --amber:#f59e0b;--green:#10b981;--red:#ef4444;--purple:#8b5cf6;
+  --font-head:'Syne',sans-serif;--font-mono:'Space Mono',monospace;
   --radius:6px;
-  --font-head:'Syne',sans-serif;
-  --font-mono:'Space Mono',monospace;
 }
 html,body{height:100%;background:var(--bg0);color:var(--text1);font-family:var(--font-mono);overflow:hidden}
 button{cursor:pointer;font-family:inherit;border:none;outline:none}
 input,select{font-family:inherit;outline:none}
-a{color:inherit;text-decoration:none}
 ::-webkit-scrollbar{width:4px;height:4px}
 ::-webkit-scrollbar-track{background:var(--bg1)}
 ::-webkit-scrollbar-thumb{background:var(--line2);border-radius:2px}
 
-/* ── LAYOUT ──────────────────────────────────────────────────────────── */
-.app{display:grid;grid-template-columns:220px 1fr;grid-template-rows:52px 1fr;height:100vh}
+/* ── LOGIN ── */
+#login-screen{
+  position:fixed;inset:0;background:var(--bg0);
+  display:flex;align-items:center;justify-content:center;z-index:999;
+}
+.login-box{
+  background:var(--bg2);border:1px solid var(--line2);border-radius:12px;
+  padding:40px;width:380px;
+}
+.login-logo{font-family:var(--font-head);font-size:24px;font-weight:800;margin-bottom:4px;display:flex;align-items:center;gap:10px}
+.login-logo-icon{width:36px;height:36px;background:var(--blue);border-radius:8px;display:grid;place-items:center;font-size:18px}
+.login-sub{font-size:10px;color:var(--text3);letter-spacing:2px;text-transform:uppercase;margin-bottom:32px}
+.login-label{font-size:9px;letter-spacing:2px;color:var(--text3);text-transform:uppercase;margin-bottom:6px;display:block}
+.login-input{
+  width:100%;background:var(--bg3);border:1px solid var(--line2);border-radius:var(--radius);
+  color:var(--text1);font-size:12px;padding:10px 12px;margin-bottom:16px;
+  font-family:var(--font-mono);transition:border-color .15s;
+}
+.login-input:focus{border-color:var(--blue)}
+.login-btn{
+  width:100%;background:var(--blue);color:#fff;border:none;border-radius:var(--radius);
+  padding:12px;font-size:12px;font-family:var(--font-mono);letter-spacing:1px;
+  cursor:pointer;transition:background .15s;margin-top:8px;
+}
+.login-btn:hover{background:var(--blue-dim)}
+.login-btn:disabled{opacity:.5;cursor:not-allowed}
+.login-error{color:var(--red);font-size:10px;margin-top:8px;min-height:16px;text-align:center}
+.login-hint{font-size:10px;color:var(--text3);text-align:center;margin-top:16px;line-height:1.8}
 
-/* ── TOPBAR ──────────────────────────────────────────────────────────── */
+/* ── LAYOUT ── */
+.app{display:grid;grid-template-columns:220px 1fr;grid-template-rows:52px 1fr;height:100vh}
 .topbar{
-  grid-column:1/-1;
-  background:var(--bg1);
-  border-bottom:1px solid var(--line);
-  display:flex;align-items:center;gap:0;
-  padding:0 20px;
-  position:relative;z-index:100;
+  grid-column:1/-1;background:var(--bg1);border-bottom:1px solid var(--line);
+  display:flex;align-items:center;gap:0;padding:0 20px;position:relative;z-index:100;
 }
-.logo{
-  display:flex;align-items:center;gap:10px;
-  font-family:var(--font-head);font-size:15px;font-weight:800;letter-spacing:.5px;
-  color:var(--text1);margin-right:24px;
-}
-.logo-icon{
-  width:28px;height:28px;background:var(--blue);border-radius:5px;
-  display:grid;place-items:center;font-size:14px;
-}
-.top-tag{
-  font-size:9px;letter-spacing:2px;color:var(--text3);text-transform:uppercase;
-  border:1px solid var(--line2);border-radius:3px;padding:2px 6px;margin-right:auto;
-}
+.logo{display:flex;align-items:center;gap:10px;font-family:var(--font-head);font-size:15px;font-weight:800;color:var(--text1);margin-right:24px}
+.logo-icon{width:28px;height:28px;background:var(--blue);border-radius:5px;display:grid;place-items:center;font-size:14px}
+.top-tag{font-size:9px;letter-spacing:2px;color:var(--text3);text-transform:uppercase;border:1px solid var(--line2);border-radius:3px;padding:2px 6px;margin-right:auto}
 .status-dot{width:7px;height:7px;border-radius:50%;background:var(--green);box-shadow:0 0 8px var(--green);animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
 .topbar-right{display:flex;align-items:center;gap:16px;font-size:11px;color:var(--text2)}
-.api-status{display:flex;align-items:center;gap:6px}
 .clock{font-size:11px;color:var(--cyan);letter-spacing:1px}
-.role-badge{
-  background:var(--bg3);border:1px solid var(--blue);border-radius:4px;
-  padding:3px 10px;font-size:10px;letter-spacing:1px;color:var(--blue);
-  text-transform:uppercase;
-}
+.role-badge{background:var(--bg3);border:1px solid var(--blue);border-radius:4px;padding:3px 10px;font-size:10px;letter-spacing:1px;color:var(--blue);text-transform:uppercase}
+.logout-btn{background:transparent;border:1px solid var(--line2);color:var(--text3);border-radius:var(--radius);padding:4px 10px;font-size:10px;cursor:pointer;transition:all .15s}
+.logout-btn:hover{border-color:var(--red);color:var(--red)}
 
-/* ── SIDEBAR ─────────────────────────────────────────────────────────── */
-.sidebar{
-  background:var(--bg1);border-right:1px solid var(--line);
-  display:flex;flex-direction:column;overflow-y:auto;padding:16px 0;
-}
+/* ── SIDEBAR ── */
+.sidebar{background:var(--bg1);border-right:1px solid var(--line);display:flex;flex-direction:column;overflow-y:auto;padding:16px 0}
 .nav-section{padding:0 12px;margin-bottom:4px}
 .nav-label{font-size:9px;letter-spacing:2px;color:var(--text3);text-transform:uppercase;padding:8px 8px 4px}
-.nav-item{
-  display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--radius);
-  font-size:11px;color:var(--text2);cursor:pointer;transition:all .15s;margin-bottom:2px;
-  letter-spacing:.3px;
-}
+.nav-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--radius);font-size:11px;color:var(--text2);cursor:pointer;transition:all .15s;margin-bottom:2px;letter-spacing:.3px}
 .nav-item:hover{background:var(--bg3);color:var(--text1)}
 .nav-item.active{background:rgba(59,130,246,.12);color:var(--blue);border-left:2px solid var(--blue)}
 .nav-icon{font-size:13px;width:16px;text-align:center;flex-shrink:0}
-.nav-badge{
-  margin-left:auto;background:var(--red);color:#fff;font-size:9px;
-  border-radius:10px;padding:1px 6px;min-width:18px;text-align:center;
-}
-.sidebar-role{
-  margin-top:auto;padding:12px;border-top:1px solid var(--line);
-}
-.role-label{font-size:9px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px}
-.role-select{
-  width:100%;background:var(--bg3);border:1px solid var(--line2);border-radius:var(--radius);
-  color:var(--text1);font-size:10px;padding:6px 8px;letter-spacing:.5px;
-}
+.nav-badge{margin-left:auto;background:var(--red);color:#fff;font-size:9px;border-radius:10px;padding:1px 6px;min-width:18px;text-align:center}
 
-/* ── MAIN ────────────────────────────────────────────────────────────── */
+/* ── MAIN ── */
 .main{overflow-y:auto;padding:20px;background:var(--bg0)}
-.page{display:none}
-.page.active{display:block}
-
-/* ── PAGE HEADER ─────────────────────────────────────────────────────── */
+.page{display:none}.page.active{display:block}
 .page-header{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:20px}
 .page-title{font-family:var(--font-head);font-size:22px;font-weight:700;color:var(--text1);line-height:1.2}
 .page-sub{font-size:10px;color:var(--text3);letter-spacing:1px;margin-top:3px;text-transform:uppercase}
 .header-actions{display:flex;gap:8px;align-items:center}
-.btn{
-  padding:7px 14px;border-radius:var(--radius);font-size:11px;letter-spacing:.5px;
-  transition:all .15s;display:flex;align-items:center;gap:6px;
-}
+.btn{padding:7px 14px;border-radius:var(--radius);font-size:11px;letter-spacing:.5px;transition:all .15s;display:flex;align-items:center;gap:6px;cursor:pointer}
 .btn-ghost{background:transparent;border:1px solid var(--line2);color:var(--text2)}
 .btn-ghost:hover{border-color:var(--blue);color:var(--blue)}
 .btn-primary{background:var(--blue);color:#fff;border:1px solid var(--blue)}
 .btn-primary:hover{background:var(--blue-dim)}
 .btn-sm{padding:5px 10px;font-size:10px}
 
-/* ── KPI CARDS ───────────────────────────────────────────────────────── */
+/* ── KPI GRID ── */
 .kpi-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:12px;margin-bottom:20px}
-.kpi-card{
-  background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);
-  padding:16px;position:relative;overflow:hidden;transition:border-color .2s;
-}
-.kpi-card:hover{border-color:var(--line2)}
-.kpi-card::before{
-  content:'';position:absolute;top:0;left:0;right:0;height:2px;
-}
-.kpi-card.blue::before{background:var(--blue)}
-.kpi-card.cyan::before{background:var(--cyan)}
-.kpi-card.green::before{background:var(--green)}
-.kpi-card.amber::before{background:var(--amber)}
-.kpi-card.red::before{background:var(--red)}
-.kpi-card.purple::before{background:var(--purple)}
+.kpi-card{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);padding:16px;position:relative;overflow:hidden}
+.kpi-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px}
+.kpi-card.blue::before{background:var(--blue)}.kpi-card.cyan::before{background:var(--cyan)}
+.kpi-card.green::before{background:var(--green)}.kpi-card.amber::before{background:var(--amber)}
+.kpi-card.red::before{background:var(--red)}.kpi-card.purple::before{background:var(--purple)}
 .kpi-label{font-size:9px;letter-spacing:2px;color:var(--text3);text-transform:uppercase;margin-bottom:8px}
 .kpi-value{font-family:var(--font-head);font-size:28px;font-weight:700;line-height:1;margin-bottom:4px}
-.kpi-value.blue{color:var(--blue)}
-.kpi-value.cyan{color:var(--cyan)}
-.kpi-value.green{color:var(--green)}
-.kpi-value.amber{color:var(--amber)}
-.kpi-value.red{color:var(--red)}
-.kpi-value.purple{color:var(--purple)}
+.kpi-value.blue{color:var(--blue)}.kpi-value.cyan{color:var(--cyan)}.kpi-value.green{color:var(--green)}
+.kpi-value.amber{color:var(--amber)}.kpi-value.red{color:var(--red)}.kpi-value.purple{color:var(--purple)}
 .kpi-delta{font-size:10px;color:var(--text3)}
-.kpi-delta.up{color:var(--green)}
-.kpi-delta.down{color:var(--red)}
 
-/* ── GRID LAYOUTS ────────────────────────────────────────────────────── */
+/* ── PANELS ── */
 .grid-2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
 .grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px}
 .grid-62{display:grid;grid-template-columns:1.6fr 1fr;gap:16px}
-.grid-26{display:grid;grid-template-columns:1fr 1.6fr;gap:16px}
-
-/* ── PANEL ───────────────────────────────────────────────────────────── */
-.panel{
-  background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);
-  overflow:hidden;margin-bottom:16px;
-}
-.panel-head{
-  display:flex;align-items:center;justify-content:space-between;
-  padding:12px 16px;border-bottom:1px solid var(--line);
-  background:var(--bg2);
-}
+.panel{background:var(--bg2);border:1px solid var(--line);border-radius:var(--radius);overflow:hidden;margin-bottom:16px}
+.panel-head{display:flex;align-items:center;justify-content:space-between;padding:12px 16px;border-bottom:1px solid var(--line);background:var(--bg2)}
 .panel-title{font-family:var(--font-head);font-size:13px;font-weight:600;display:flex;align-items:center;gap:8px}
-.panel-sub{font-size:10px;color:var(--text3);letter-spacing:.5px}
 .panel-body{padding:16px}
-.panel-accent{border-top:1px solid var(--blue)}
+.panel-accent{border-top:2px solid var(--blue)}
 
-/* ── TABLE ───────────────────────────────────────────────────────────── */
+/* ── TABLES ── */
 .tbl-wrap{overflow-x:auto}
 table{width:100%;border-collapse:collapse;font-size:11px}
-thead th{
-  text-align:left;padding:8px 12px;font-size:9px;letter-spacing:1.5px;
-  color:var(--text3);text-transform:uppercase;border-bottom:1px solid var(--line);
-  font-weight:400;white-space:nowrap;
-}
+thead th{text-align:left;padding:8px 12px;font-size:9px;letter-spacing:1.5px;color:var(--text3);text-transform:uppercase;border-bottom:1px solid var(--line);font-weight:400;white-space:nowrap}
 tbody tr{border-bottom:1px solid var(--line);transition:background .12s}
 tbody tr:hover{background:var(--bg3)}
 tbody tr:last-child{border-bottom:none}
@@ -190,12 +128,8 @@ td{padding:9px 12px;color:var(--text2);vertical-align:middle}
 td.primary{color:var(--text1);font-weight:700}
 td.mono{font-family:var(--font-mono);font-size:10px}
 
-/* ── BADGES ──────────────────────────────────────────────────────────── */
-.badge{
-  display:inline-flex;align-items:center;gap:4px;
-  padding:2px 8px;border-radius:10px;font-size:9px;letter-spacing:.5px;
-  font-weight:700;text-transform:uppercase;white-space:nowrap;
-}
+/* ── BADGES ── */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border-radius:10px;font-size:9px;letter-spacing:.5px;font-weight:700;text-transform:uppercase;white-space:nowrap}
 .badge-green{background:rgba(16,185,129,.15);color:var(--green);border:1px solid rgba(16,185,129,.3)}
 .badge-red{background:rgba(239,68,68,.15);color:var(--red);border:1px solid rgba(239,68,68,.3)}
 .badge-amber{background:rgba(245,158,11,.15);color:var(--amber);border:1px solid rgba(245,158,11,.3)}
@@ -204,1214 +138,1127 @@ td.mono{font-family:var(--font-mono);font-size:10px}
 .badge-purple{background:rgba(139,92,246,.15);color:var(--purple);border:1px solid rgba(139,92,246,.3)}
 .badge-gray{background:rgba(255,255,255,.05);color:var(--text3);border:1px solid var(--line2)}
 
-/* ── SEARCH BAR ──────────────────────────────────────────────────────── */
-.search-bar{
-  display:flex;gap:8px;margin-bottom:16px;align-items:center;
-}
-.search-input{
-  flex:1;background:var(--bg2);border:1px solid var(--line2);border-radius:var(--radius);
-  color:var(--text1);font-size:11px;padding:8px 12px;transition:border-color .15s;
-}
+/* ── MISC ── */
+.search-bar{display:flex;gap:8px;margin-bottom:16px;align-items:center}
+.search-input{flex:1;background:var(--bg2);border:1px solid var(--line2);border-radius:var(--radius);color:var(--text1);font-size:11px;padding:8px 12px;transition:border-color .15s}
 .search-input:focus{border-color:var(--blue)}
 .search-input::placeholder{color:var(--text3)}
-.filter-select{
-  background:var(--bg2);border:1px solid var(--line2);border-radius:var(--radius);
-  color:var(--text2);font-size:11px;padding:8px 12px;min-width:120px;
-}
-
-/* ── CHART CONTAINERS ────────────────────────────────────────────────── */
-.chart-wrap{position:relative;height:200px}
-.chart-wrap-lg{position:relative;height:260px}
-.chart-wrap-sm{position:relative;height:140px}
-
-/* ── MINI SPARKLINE ──────────────────────────────────────────────────── */
-.sparkline{height:40px;width:100%}
-
-/* ── TIMELINE / EVENTS ───────────────────────────────────────────────── */
-.timeline{display:flex;flex-direction:column;gap:0}
-.tl-item{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);position:relative}
-.tl-item:last-child{border-bottom:none}
-.tl-dot{
-  width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:3px;
-  border:2px solid var(--bg2);box-shadow:0 0 0 1px currentColor;
-}
-.tl-dot.green{color:var(--green);background:var(--green)}
-.tl-dot.blue{color:var(--blue);background:var(--blue)}
-.tl-dot.amber{color:var(--amber);background:var(--amber)}
-.tl-dot.red{color:var(--red);background:var(--red)}
-.tl-content{flex:1}
-.tl-title{font-size:11px;color:var(--text1);margin-bottom:2px}
-.tl-sub{font-size:10px;color:var(--text3)}
-.tl-time{font-size:9px;color:var(--text3);white-space:nowrap;font-family:var(--font-mono)}
-
-/* ── METER BARS ──────────────────────────────────────────────────────── */
-.meter-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;font-size:11px}
-.meter-label{width:120px;color:var(--text2);font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-.meter-bar-wrap{flex:1;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden}
-.meter-bar{height:100%;border-radius:3px;transition:width .6s ease}
-.meter-val{width:36px;text-align:right;font-size:10px;color:var(--text2);font-family:var(--font-mono)}
-
-/* ── IOT GAUGES ──────────────────────────────────────────────────────── */
-.gauge-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
-.gauge-card{
-  background:var(--bg3);border:1px solid var(--line);border-radius:var(--radius);
-  padding:14px;text-align:center;position:relative;
-}
-.gauge-value{font-family:var(--font-head);font-size:24px;font-weight:700;line-height:1;margin:6px 0 2px}
-.gauge-unit{font-size:9px;color:var(--text3);letter-spacing:1px;text-transform:uppercase}
-.gauge-name{font-size:10px;color:var(--text2);margin-top:4px}
-.gauge-status{
-  position:absolute;top:8px;right:8px;width:7px;height:7px;border-radius:50%;
-}
-.gauge-status.ok{background:var(--green);box-shadow:0 0 8px var(--green)}
-.gauge-status.warn{background:var(--amber);box-shadow:0 0 8px var(--amber);animation:pulse 1s infinite}
-.gauge-status.crit{background:var(--red);box-shadow:0 0 10px var(--red);animation:pulse .5s infinite}
-
-/* ── ALERT STRIP ─────────────────────────────────────────────────────── */
-.alert-strip{
-  display:flex;align-items:center;gap:10px;padding:8px 14px;border-radius:var(--radius);
-  font-size:11px;margin-bottom:10px;border:1px solid;
-}
+.filter-select{background:var(--bg2);border:1px solid var(--line2);border-radius:var(--radius);color:var(--text2);font-size:11px;padding:8px 12px;min-width:120px}
+.chart-wrap{position:relative;height:200px}.chart-wrap-lg{position:relative;height:260px}
+.alert-strip{display:flex;align-items:center;gap:10px;padding:8px 14px;border-radius:var(--radius);font-size:11px;margin-bottom:10px;border:1px solid}
 .alert-strip.warn{background:rgba(245,158,11,.08);border-color:rgba(245,158,11,.3);color:var(--amber)}
 .alert-strip.danger{background:rgba(239,68,68,.08);border-color:rgba(239,68,68,.3);color:var(--red)}
 .alert-strip.info{background:rgba(59,130,246,.08);border-color:rgba(59,130,246,.3);color:var(--blue)}
-
-/* ── MAP PLACEHOLDER ─────────────────────────────────────────────────── */
-.map-area{
-  height:220px;background:var(--bg3);border-radius:var(--radius);
-  position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;
-  border:1px solid var(--line);
-}
-.map-grid{
-  position:absolute;inset:0;
-  background-image:
-    linear-gradient(rgba(59,130,246,.06) 1px,transparent 1px),
-    linear-gradient(90deg,rgba(59,130,246,.06) 1px,transparent 1px);
-  background-size:30px 30px;
-}
-.map-label{color:var(--text3);font-size:10px;letter-spacing:2px;z-index:1}
-.ship-dot{
-  position:absolute;width:10px;height:10px;border-radius:50%;
-  background:var(--cyan);box-shadow:0 0 10px var(--cyan);
-  animation:ship-pulse 2s infinite;
-}
-@keyframes ship-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.4)}}
-.ship-dot::after{
-  content:'';position:absolute;inset:-4px;border-radius:50%;
-  border:1px solid var(--cyan);opacity:.4;animation:ship-ring 2s infinite;
-}
-@keyframes ship-ring{0%{transform:scale(1);opacity:.4}100%{transform:scale(2.5);opacity:0}}
-
-/* ── SUPPLIER SCORECARD ──────────────────────────────────────────────── */
-.supplier-card{
-  background:var(--bg3);border:1px solid var(--line);border-radius:var(--radius);
-  padding:14px;display:flex;flex-direction:column;gap:10px;margin-bottom:10px;
-  transition:border-color .2s;
-}
-.supplier-card:hover{border-color:var(--line2)}
-.supplier-top{display:flex;align-items:center;justify-content:space-between}
-.supplier-name{font-family:var(--font-head);font-size:13px;font-weight:600}
-.supplier-score{
-  font-family:var(--font-head);font-size:18px;font-weight:700;
-}
-.score-a{color:var(--green)}
-.score-b{color:var(--cyan)}
-.score-c{color:var(--amber)}
-.score-d{color:var(--red)}
-
-/* ── CERT ROW ────────────────────────────────────────────────────────── */
-.cert-row{
-  display:flex;align-items:center;gap:12px;padding:10px 0;
-  border-bottom:1px solid var(--line);font-size:11px;
-}
-.cert-row:last-child{border-bottom:none}
-.cert-lock{font-size:14px}
-.cert-info{flex:1}
-.cert-id{color:var(--text1);font-family:var(--font-mono);font-size:10px}
-.cert-part{color:var(--text3);font-size:10px}
-.cert-meta{text-align:right;font-size:10px;color:var(--text3)}
-
-/* ── FORM ELEMENTS ───────────────────────────────────────────────────── */
-.form-row{display:flex;gap:12px;margin-bottom:12px}
-.form-group{display:flex;flex-direction:column;gap:4px;flex:1}
-.form-label{font-size:9px;letter-spacing:1.5px;color:var(--text3);text-transform:uppercase}
-.form-input{
-  background:var(--bg3);border:1px solid var(--line2);border-radius:var(--radius);
-  color:var(--text1);font-size:11px;padding:8px 10px;font-family:inherit;
-  transition:border-color .15s;
-}
-.form-input:focus{border-color:var(--blue)}
-.form-select{
-  background:var(--bg3);border:1px solid var(--line2);border-radius:var(--radius);
-  color:var(--text1);font-size:11px;padding:8px 10px;font-family:inherit;
-}
-
-/* ── NOTIFICATION TOAST ──────────────────────────────────────────────── */
-.toast-container{position:fixed;bottom:20px;right:20px;z-index:999;display:flex;flex-direction:column;gap:8px}
-.toast{
-  background:var(--bg2);border:1px solid var(--line2);border-radius:var(--radius);
-  padding:10px 14px;font-size:11px;min-width:260px;max-width:320px;
-  display:flex;align-items:flex-start;gap:10px;
-  animation:slide-in .25s ease;box-shadow:0 8px 24px rgba(0,0,0,.4);
-}
-@keyframes slide-in{from{transform:translateX(20px);opacity:0}to{transform:translateX(0);opacity:1}}
-.toast.success{border-left:3px solid var(--green)}
-.toast.warning{border-left:3px solid var(--amber)}
-.toast.error{border-left:3px solid var(--red)}
-.toast-msg{flex:1;color:var(--text1);line-height:1.5}
-.toast-close{color:var(--text3);cursor:pointer;font-size:14px;line-height:1}
-
-/* ── LOADING ─────────────────────────────────────────────────────────── */
-.loading{display:flex;align-items:center;justify-content:center;height:100px;color:var(--text3);font-size:11px;letter-spacing:2px}
-.spin{animation:spin .8s linear infinite;display:inline-block;margin-right:8px}
-@keyframes spin{to{transform:rotate(360deg)}}
-
-/* ── SECTION DIVIDER ─────────────────────────────────────────────────── */
 .section-divider{height:1px;background:var(--line);margin:16px 0}
-
-/* ── RESPONSIVE HELPERS ──────────────────────────────────────────────── */
-.mb-4{margin-bottom:16px}
-.mt-4{margin-top:16px}
-.flex-gap{display:flex;gap:8px;align-items:center}
-.ml-auto{margin-left:auto}
-.text-mono{font-family:var(--font-mono);font-size:10px}
-.text-sm{font-size:11px}
-.text-xs{font-size:10px}
-.text-muted{color:var(--text3)}
-.text-cyan{color:var(--cyan)}
-.text-green{color:var(--green)}
-.text-red{color:var(--red)}
-.text-amber{color:var(--amber)}
-.text-blue{color:var(--blue)}
+.meter-row{display:flex;align-items:center;gap:10px;margin-bottom:10px;font-size:11px}
+.meter-label{width:130px;color:var(--text2);font-size:10px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.meter-bar-wrap{flex:1;height:6px;background:var(--bg3);border-radius:3px;overflow:hidden}
+.meter-bar{height:100%;border-radius:3px;transition:width .8s ease}
+.meter-val{width:36px;text-align:right;font-size:10px;color:var(--text2);font-family:var(--font-mono)}
+.gauge-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:16px}
+.gauge-card{background:var(--bg3);border:1px solid var(--line);border-radius:var(--radius);padding:14px;text-align:center;position:relative}
+.gauge-value{font-family:var(--font-head);font-size:24px;font-weight:700;line-height:1;margin:6px 0 2px}
+.gauge-unit{font-size:9px;color:var(--text3);letter-spacing:1px;text-transform:uppercase}
+.gauge-name{font-size:10px;color:var(--text2);margin-top:4px}
+.gauge-status{position:absolute;top:8px;right:8px;width:7px;height:7px;border-radius:50%}
+.gauge-status.ok{background:var(--green);box-shadow:0 0 8px var(--green)}
+.gauge-status.warn{background:var(--amber);box-shadow:0 0 8px var(--amber);animation:pulse 1s infinite}
+.gauge-status.crit{background:var(--red);box-shadow:0 0 10px var(--red);animation:pulse .5s infinite}
+.timeline{display:flex;flex-direction:column;gap:0}
+.tl-item{display:flex;gap:12px;padding:10px 0;border-bottom:1px solid var(--line)}
+.tl-item:last-child{border-bottom:none}
+.tl-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;margin-top:3px;border:2px solid var(--bg2);box-shadow:0 0 0 1px currentColor}
+.tl-dot.green{color:var(--green);background:var(--green)}.tl-dot.blue{color:var(--blue);background:var(--blue)}
+.tl-dot.amber{color:var(--amber);background:var(--amber)}.tl-dot.red{color:var(--red);background:var(--red)}
+.tl-content{flex:1}.tl-title{font-size:11px;color:var(--text1);margin-bottom:2px}.tl-sub{font-size:10px;color:var(--text3)}
+.tl-time{font-size:9px;color:var(--text3);white-space:nowrap}
+.loading-row td{text-align:center;color:var(--text3);font-size:10px;letter-spacing:2px;padding:24px}
+.empty-state{text-align:center;color:var(--text3);font-size:11px;padding:40px;letter-spacing:1px}
+.toast-container{position:fixed;bottom:20px;right:20px;z-index:9999;display:flex;flex-direction:column;gap:8px}
+.toast{background:var(--bg2);border:1px solid var(--line2);border-radius:var(--radius);padding:10px 14px;font-size:11px;min-width:260px;max-width:320px;display:flex;align-items:flex-start;gap:10px;animation:slide-in .25s ease;box-shadow:0 8px 24px rgba(0,0,0,.4)}
+@keyframes slide-in{from{transform:translateX(20px);opacity:0}to{transform:translateX(0);opacity:1}}
+.toast.success{border-left:3px solid var(--green)}.toast.warning{border-left:3px solid var(--amber)}.toast.error{border-left:3px solid var(--red)}.toast.info{border-left:3px solid var(--blue)}
+.toast-msg{flex:1;color:var(--text1);line-height:1.5}.toast-close{color:var(--text3);cursor:pointer;font-size:14px}
+.map-area{height:200px;background:var(--bg3);border-radius:var(--radius);position:relative;overflow:hidden;display:flex;align-items:center;justify-content:center;border:1px solid var(--line)}
+.map-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(59,130,246,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(59,130,246,.06) 1px,transparent 1px);background-size:30px 30px}
+.ship-dot{position:absolute;width:10px;height:10px;border-radius:50%;background:var(--cyan);box-shadow:0 0 10px var(--cyan);animation:ship-pulse 2s infinite}
+@keyframes ship-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.4)}}
+.ship-dot::after{content:'';position:absolute;inset:-4px;border-radius:50%;border:1px solid var(--cyan);opacity:.4;animation:ship-ring 2s infinite}
+@keyframes ship-ring{0%{transform:scale(1);opacity:.4}100%{transform:scale(2.5);opacity:0}}
+.text-green{color:var(--green)}.text-red{color:var(--red)}.text-amber{color:var(--amber)}.text-cyan{color:var(--cyan)}.text-blue{color:var(--blue)}.text-muted{color:var(--text3)}
+.mb-4{margin-bottom:16px}.flex-gap{display:flex;gap:8px;align-items:center}
+.cert-row{display:flex;align-items:center;gap:12px;padding:10px 0;border-bottom:1px solid var(--line);font-size:11px}
+.cert-row:last-child{border-bottom:none}.cert-info{flex:1}.cert-id{color:var(--text1);font-family:var(--font-mono);font-size:10px}.cert-part{color:var(--text3);font-size:10px}
 </style>
 </head>
 <body>
 
-<div class="app">
-
-<!-- ── TOPBAR ──────────────────────────────────────────────────────────── -->
-<header class="topbar">
-  <div class="logo">
-    <div class="logo-icon">✈</div>
-    AeroNetB
-  </div>
-  <span class="top-tag">ASCM · OPS CENTRE</span>
-  <div class="topbar-right">
-    <div class="api-status">
-      <div class="status-dot" id="api-dot"></div>
-      <span id="api-label" style="font-size:10px;color:var(--text3)">CONNECTING</span>
+<!-- ── LOGIN SCREEN ── -->
+<div id="login-screen">
+  <div class="login-box">
+    <div class="login-logo">
+      <div class="login-logo-icon">✈</div>
+      AeroNetB
     </div>
-    <span style="color:var(--line2)">|</span>
-    <span class="clock" id="clock">--:--:--</span>
-    <span style="color:var(--line2)">|</span>
-    <span class="role-badge" id="role-display">SUPPLY CHAIN MGR</span>
-    <div style="width:28px;height:28px;background:var(--blue);border-radius:50%;display:grid;place-items:center;font-size:12px">👤</div>
-  </div>
-</header>
-
-<!-- ── SIDEBAR ─────────────────────────────────────────────────────────── -->
-<aside class="sidebar">
-  <div class="nav-section">
-    <div class="nav-label">Overview</div>
-    <div class="nav-item active" data-page="overview" onclick="nav(this)">
-      <span class="nav-icon">◼</span> Dashboard
-    </div>
-    <div class="nav-item" data-page="notifications" onclick="nav(this)">
-      <span class="nav-icon">🔔</span> Alerts
-      <span class="nav-badge" id="alert-count">3</span>
+    <div class="login-sub">Aerospace Supply Chain Management</div>
+    <label class="login-label">Email Address</label>
+    <input class="login-input" id="login-email" type="email" placeholder="j.doe@aeronetb.com" value="j.smith@aeronetb.com"/>
+    <label class="login-label">Password</label>
+    <input class="login-input" id="login-password" type="password" placeholder="••••••••••" value="AeroNet2025"/>
+    <button class="login-btn" id="login-btn" onclick="doLogin()">Sign In →</button>
+    <div class="login-error" id="login-error"></div>
+    <div class="login-hint">
+      Default password: <strong style="color:var(--cyan)">AeroNet2025</strong><br>
+      j.smith@aeronetb.com · j.doe@aeronetb.com<br>
+      s.mitchell@aeronetb.com · l.tremblay@aeronetb.com
     </div>
   </div>
-  <div class="nav-section">
-    <div class="nav-label">Operations</div>
-    <div class="nav-item" data-page="shipments" onclick="nav(this)">
-      <span class="nav-icon">🚢</span> Shipments
-    </div>
-    <div class="nav-item" data-page="orders" onclick="nav(this)">
-      <span class="nav-icon">📋</span> Orders
-    </div>
-    <div class="nav-item" data-page="suppliers" onclick="nav(this)">
-      <span class="nav-icon">🏭</span> Suppliers
-    </div>
-  </div>
-  <div class="nav-section">
-    <div class="nav-label">Quality</div>
-    <div class="nav-item" data-page="qc" onclick="nav(this)">
-      <span class="nav-icon">🔬</span> QC Reports
-    </div>
-    <div class="nav-item" data-page="certifications" onclick="nav(this)">
-      <span class="nav-icon">🔒</span> Certifications
-    </div>
-  </div>
-  <div class="nav-section">
-    <div class="nav-label">Equipment</div>
-    <div class="nav-item" data-page="iot" onclick="nav(this)">
-      <span class="nav-icon">📡</span> IoT Monitor
-    </div>
-    <div class="nav-item" data-page="equipment" onclick="nav(this)">
-      <span class="nav-icon">⚙️</span> Equipment
-    </div>
-  </div>
-  <div class="nav-section">
-    <div class="nav-label">Admin</div>
-    <div class="nav-item" data-page="audit" onclick="nav(this)">
-      <span class="nav-icon">📜</span> Audit Log
-    </div>
-    <div class="nav-item" data-page="users" onclick="nav(this)">
-      <span class="nav-icon">👥</span> Users
-    </div>
-  </div>
-
-  <div class="sidebar-role">
-    <div class="role-label">Switch Role View</div>
-    <select class="role-select" id="role-switcher" onchange="switchRole(this.value)">
-      <option value="SUPPLY_CHAIN_MANAGER">Supply Chain Manager</option>
-      <option value="PROCUREMENT_OFFICER">Procurement Officer</option>
-      <option value="QUALITY_INSPECTOR">Quality Inspector</option>
-      <option value="EQUIPMENT_ENGINEER">Equipment Engineer</option>
-      <option value="AUDITOR">Auditor / Regulator</option>
-    </select>
-  </div>
-</aside>
-
-<!-- ── MAIN CONTENT ────────────────────────────────────────────────────── -->
-<main class="main" id="main">
-
-  <!-- ═══════════════════════════════════════════════════════════════════ -->
-  <!-- PAGE: OVERVIEW                                                      -->
-  <!-- ═══════════════════════════════════════════════════════════════════ -->
-  <div class="page active" id="page-overview">
-    <div class="page-header">
-      <div>
-        <div class="page-title">Operations Overview</div>
-        <div class="page-sub">Real-time supply chain visibility</div>
-      </div>
-      <div class="header-actions">
-        <button class="btn btn-ghost btn-sm" onclick="exportCSV()">⬇ Export CSV</button>
-        <button class="btn btn-primary btn-sm" onclick="refreshAll()">↺ Refresh</button>
-      </div>
-    </div>
-
-    <!-- KPI Strip -->
-    <div class="kpi-grid" id="kpi-grid">
-      <div class="kpi-card blue">
-        <div class="kpi-label">Active Suppliers</div>
-        <div class="kpi-value blue" id="kpi-suppliers">4</div>
-        <div class="kpi-delta up">↑ 1 this quarter</div>
-      </div>
-      <div class="kpi-card cyan">
-        <div class="kpi-label">Open Orders</div>
-        <div class="kpi-value cyan" id="kpi-orders">2</div>
-        <div class="kpi-delta">In progress</div>
-      </div>
-      <div class="kpi-card amber">
-        <div class="kpi-label">In Transit</div>
-        <div class="kpi-value amber" id="kpi-transit">1</div>
-        <div class="kpi-delta down">↓ 1 delayed</div>
-      </div>
-      <div class="kpi-card green">
-        <div class="kpi-label">QC Approved</div>
-        <div class="kpi-value green" id="kpi-qc">3</div>
-        <div class="kpi-delta up">↑ 100% pass rate</div>
-      </div>
-      <div class="kpi-card purple">
-        <div class="kpi-label">Immutable Certs</div>
-        <div class="kpi-value purple" id="kpi-certs">1</div>
-        <div class="kpi-delta">Locked &amp; verified</div>
-      </div>
-      <div class="kpi-card red">
-        <div class="kpi-label">IoT Anomalies</div>
-        <div class="kpi-value red" id="kpi-anomalies">2</div>
-        <div class="kpi-delta down">Needs review</div>
-      </div>
-    </div>
-
-    <!-- Alerts -->
-    <div class="alert-strip warn">⚠ Shipment FDX-AE-20250901-007 — minor shock event (3.1G) logged during transit. Within limits but flagged for QC.</div>
-    <div class="alert-strip danger">🔴 CNC Mill Alpha-7 — vibration threshold exceeded (2.9 mm/s). Bearing inspection recommended.</div>
-
-    <div class="grid-62 mb-4">
-      <!-- Shipment Map -->
-      <div class="panel">
-        <div class="panel-head">
-          <div class="panel-title">🌍 Shipments in Transit</div>
-          <span class="badge badge-cyan">LIVE</span>
-        </div>
-        <div class="panel-body">
-          <div class="map-area">
-            <div class="map-grid"></div>
-            <div class="ship-dot" style="left:22%;top:38%"></div>
-            <div class="ship-dot" style="left:61%;top:31%;animation-delay:.5s"></div>
-            <div class="ship-dot" style="left:45%;top:55%;background:var(--amber);box-shadow:0 0 10px var(--amber)"></div>
-            <div style="position:absolute;bottom:10px;left:10px;font-size:9px;color:var(--text3);letter-spacing:1px">● DHL-AE-20250820 · ● FDX-AE-20250901 · ● UPS-AE-20251001</div>
-          </div>
-          <div class="section-divider"></div>
-          <table>
-            <thead><tr><th>Tracking</th><th>Carrier</th><th>Destination</th><th>Status</th><th>ETA</th></tr></thead>
-            <tbody>
-              <tr><td class="mono">DHL-AE-20250820-001</td><td>DHL Aviation</td><td>Heathrow, UK</td><td><span class="badge badge-green">DELIVERED</span></td><td class="text-muted">2025-08-28</td></tr>
-              <tr><td class="mono">FDX-AE-20250901-007</td><td>FedEx Freight</td><td>Gatwick, UK</td><td><span class="badge badge-amber">⚠ SHOCK</span></td><td class="text-muted">2025-09-01</td></tr>
-              <tr><td class="mono">UPS-AE-20251001-022</td><td>UPS Supply Chain</td><td>Birmingham, UK</td><td><span class="badge badge-blue">IN TRANSIT</span></td><td class="text-muted">2025-10-30</td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      <!-- Activity Feed -->
-      <div class="panel">
-        <div class="panel-head">
-          <div class="panel-title">⚡ Recent Activity</div>
-          <span class="text-xs text-muted">Last 24h</span>
-        </div>
-        <div class="panel-body">
-          <div class="timeline">
-            <div class="tl-item">
-              <div class="tl-dot green"></div>
-              <div class="tl-content">
-                <div class="tl-title">Certification CERT-2025-AX-993 approved &amp; locked</div>
-                <div class="tl-sub">Jane Doe · A320 Wing Assembly</div>
-              </div>
-              <div class="tl-time">10:00</div>
-            </div>
-            <div class="tl-item">
-              <div class="tl-dot blue"></div>
-              <div class="tl-content">
-                <div class="tl-title">QC Report QC-889234-Z9 submitted</div>
-                <div class="tl-sub">Ahmed Khan · B737 Fuselage Section</div>
-              </div>
-              <div class="tl-time">08:00</div>
-            </div>
-            <div class="tl-item">
-              <div class="tl-dot amber"></div>
-              <div class="tl-content">
-                <div class="tl-title">IoT anomaly — CNC Mill Alpha-7 vibration spike</div>
-                <div class="tl-sub">Hamburg Plant A · 2.9 mm/s</div>
-              </div>
-              <div class="tl-time">06:05</div>
-            </div>
-            <div class="tl-item">
-              <div class="tl-dot green"></div>
-              <div class="tl-content">
-                <div class="tl-title">Shipment DHL-AE-20250820-001 delivered</div>
-                <div class="tl-sub">Heathrow Air Freight · 2 items received</div>
-              </div>
-              <div class="tl-time">Yesterday</div>
-            </div>
-            <div class="tl-item">
-              <div class="tl-dot blue"></div>
-              <div class="tl-content">
-                <div class="tl-title">Purchase Order #G4 dispatched</div>
-                <div class="tl-sub">PrecisionAlloys Co. · 6× Landing Gear Actuators</div>
-              </div>
-              <div class="tl-time">Yesterday</div>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-
-    <!-- Charts Row -->
-    <div class="grid-3 mb-4">
-      <div class="panel">
-        <div class="panel-head"><div class="panel-title">QC Results (12 months)</div></div>
-        <div class="panel-body"><div class="chart-wrap"><canvas id="chart-qc-trend"></canvas></div></div>
-      </div>
-      <div class="panel">
-        <div class="panel-head"><div class="panel-title">Order Status Breakdown</div></div>
-        <div class="panel-body"><div class="chart-wrap"><canvas id="chart-order-status"></canvas></div></div>
-      </div>
-      <div class="panel">
-        <div class="panel-head"><div class="panel-title">Supplier Delivery Rate</div></div>
-        <div class="panel-body">
-          <div class="meter-row"><div class="meter-label">Global AeroParts</div><div class="meter-bar-wrap"><div class="meter-bar" style="width:96%;background:var(--green)"></div></div><div class="meter-val text-green">96%</div></div>
-          <div class="meter-row"><div class="meter-label">SkyForge Inc.</div><div class="meter-bar-wrap"><div class="meter-bar" style="width:88%;background:var(--cyan)"></div></div><div class="meter-val text-cyan">88%</div></div>
-          <div class="meter-row"><div class="meter-label">AeroTech S.A.</div><div class="meter-bar-wrap"><div class="meter-bar" style="width:74%;background:var(--amber)"></div></div><div class="meter-val text-amber">74%</div></div>
-          <div class="meter-row"><div class="meter-label">PrecisionAlloys</div><div class="meter-bar-wrap"><div class="meter-bar" style="width:61%;background:var(--red)"></div></div><div class="meter-val text-red">61%</div></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════════════════════════════════════════════ -->
-  <!-- PAGE: SHIPMENTS                                                     -->
-  <!-- ═══════════════════════════════════════════════════════════════════ -->
-  <div class="page" id="page-shipments">
-    <div class="page-header">
-      <div><div class="page-title">Shipment Tracking</div><div class="page-sub">Global logistics visibility</div></div>
-      <div class="header-actions">
-        <button class="btn btn-ghost btn-sm">⬇ Export</button>
-        <button class="btn btn-primary btn-sm" onclick="showToast('Creating new shipment form...','info')">+ New Shipment</button>
-      </div>
-    </div>
-    <div class="search-bar">
-      <input class="search-input" placeholder="Search by tracking number, supplier, or part..." oninput="filterTable(this,'shipment-table')"/>
-      <select class="filter-select"><option>All Status</option><option>In Transit</option><option>Delivered</option><option>Delayed</option></select>
-      <select class="filter-select"><option>All Carriers</option><option>DHL</option><option>FedEx</option><option>UPS</option></select>
-    </div>
-    <div class="panel mb-4">
-      <div class="panel-head">
-        <div class="panel-title">Active Shipments</div>
-        <span class="badge badge-blue">3 shipments</span>
-      </div>
-      <div class="panel-body">
-        <div class="tbl-wrap">
-          <table id="shipment-table">
-            <thead><tr><th>Shipment ID</th><th>Tracking</th><th>Supplier</th><th>Carrier</th><th>Origin</th><th>Destination</th><th>Dispatched</th><th>ETA</th><th>Status</th><th>Actions</th></tr></thead>
-            <tbody>
-              <tr><td class="mono primary">SH-001</td><td class="mono">DHL-AE-20250820-001</td><td>Global AeroParts</td><td>DHL Aviation</td><td>Hamburg, DE</td><td>Heathrow, UK</td><td class="text-muted">2025-08-18</td><td class="text-muted">2025-08-28</td><td><span class="badge badge-green">DELIVERED</span></td><td><button class="btn btn-ghost btn-sm" onclick="showShipmentDetail()">View</button></td></tr>
-              <tr><td class="mono primary">SH-002</td><td class="mono">FDX-AE-20250901-007</td><td>SkyForge Inc.</td><td>FedEx Freight</td><td>Seattle, US</td><td>Gatwick, UK</td><td class="text-muted">2025-08-29</td><td class="text-muted">2025-09-05</td><td><span class="badge badge-amber">⚠ SHOCK EVENT</span></td><td><button class="btn btn-ghost btn-sm" onclick="showShipmentDetail()">View</button></td></tr>
-              <tr><td class="mono primary">SH-003</td><td class="mono">UPS-AE-20251001-022</td><td>PrecisionAlloys</td><td>UPS Supply Chain</td><td>Birmingham, UK</td><td>Birmingham WH</td><td class="text-muted">2025-09-28</td><td class="text-muted">2025-10-30</td><td><span class="badge badge-blue">IN TRANSIT</span></td><td><button class="btn btn-ghost btn-sm" onclick="showShipmentDetail()">View</button></td></tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-
-    <div class="grid-2">
-      <div class="panel">
-        <div class="panel-head"><div class="panel-title">Shipment Timeline — DHL-AE-20250820-001</div></div>
-        <div class="panel-body">
-          <div class="timeline">
-            <div class="tl-item"><div class="tl-dot green"></div><div class="tl-content"><div class="tl-title">Delivered — Heathrow Receiving Dock</div><div class="tl-sub">Seals intact · QC handoff complete</div></div><div class="tl-time">Aug 28</div></div>
-            <div class="tl-item"><div class="tl-dot blue"></div><div class="tl-content"><div class="tl-title">Customs hold — EASA docs review</div><div class="tl-sub">Heathrow pre-customs · Humidity 47.9% RH</div></div><div class="tl-time">Aug 25</div></div>
-            <div class="tl-item"><div class="tl-dot blue"></div><div class="tl-content"><div class="tl-title">Transit hub scan — CDG Paris</div><div class="tl-sub">No issues · All seals intact</div></div><div class="tl-time">Aug 22</div></div>
-            <div class="tl-item"><div class="tl-dot blue"></div><div class="tl-content"><div class="tl-title">Departed Hamburg Cargo Terminal 2</div><div class="tl-sub">All seals intact · Container condition OK</div></div><div class="tl-time">Aug 18</div></div>
-          </div>
-        </div>
-      </div>
-      <div class="panel">
-        <div class="panel-head"><div class="panel-title">Container Conditions</div></div>
-        <div class="panel-body">
-          <div class="gauge-grid" style="grid-template-columns:1fr 1fr">
-            <div class="gauge-card"><div class="gauge-status ok"></div><div class="gauge-value text-green">18.4°</div><div class="gauge-unit">Celsius</div><div class="gauge-name">Temperature</div></div>
-            <div class="gauge-card"><div class="gauge-status ok"></div><div class="gauge-value text-cyan">0.3</div><div class="gauge-unit">mm/s</div><div class="gauge-name">Vibration</div></div>
-            <div class="gauge-card"><div class="gauge-status ok"></div><div class="gauge-value text-blue">1.013</div><div class="gauge-unit">bar</div><div class="gauge-name">Pressure</div></div>
-            <div class="gauge-card"><div class="gauge-status ok"></div><div class="gauge-value text-green">45%</div><div class="gauge-unit">rel hum</div><div class="gauge-name">Humidity</div></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════════════════════════════════════════════ -->
-  <!-- PAGE: ORDERS                                                        -->
-  <!-- ═══════════════════════════════════════════════════════════════════ -->
-  <div class="page" id="page-orders">
-    <div class="page-header">
-      <div><div class="page-title">Purchase Orders</div><div class="page-sub">Procurement lifecycle management</div></div>
-      <div class="header-actions">
-        <button class="btn btn-primary btn-sm" onclick="showToast('Order creation form loading...','info')">+ New Order</button>
-      </div>
-    </div>
-    <div class="search-bar">
-      <input class="search-input" placeholder="Search orders by ID, supplier, or part name..." oninput="filterTable(this,'orders-table')"/>
-      <select class="filter-select"><option>All Status</option><option>PLACED</option><option>CONFIRMED</option><option>DISPATCHED</option><option>COMPLETED</option></select>
-      <input type="date" class="filter-select" style="min-width:140px"/>
-    </div>
-    <div class="panel">
-      <div class="panel-head"><div class="panel-title">All Purchase Orders</div><span class="badge badge-blue">4 orders</span></div>
-      <div class="tbl-wrap">
-        <table id="orders-table">
-          <thead><tr><th>Order ID</th><th>Supplier</th><th>Part</th><th>Qty</th><th>Value (USD)</th><th>Order Date</th><th>Desired Delivery</th><th>Actual Delivery</th><th>Status</th></tr></thead>
-          <tbody>
-            <tr><td class="mono primary">G1</td><td>Global AeroParts Ltd.</td><td>A320 Wing Assembly</td><td>2</td><td class="text-green mono">$970,000</td><td class="text-muted">2025-07-15</td><td class="text-muted">2025-08-20</td><td class="text-muted">2025-08-28</td><td><span class="badge badge-green">COMPLETED</span></td></tr>
-            <tr><td class="mono primary">G2</td><td>SkyForge Components Inc.</td><td>B737 Fuselage Section</td><td>1</td><td class="text-green mono">$620,000</td><td class="text-muted">2025-08-01</td><td class="text-muted">2025-09-05</td><td class="text-muted">2025-09-01</td><td><span class="badge badge-green">COMPLETED</span></td></tr>
-            <tr><td class="mono primary">G3</td><td>AeroTech Structures S.A.</td><td>Turbine Blade Set CFM56</td><td>48</td><td class="text-amber mono">$600,000</td><td class="text-muted">2025-09-10</td><td class="text-muted">2025-10-15</td><td class="text-muted">—</td><td><span class="badge badge-cyan">CONFIRMED</span></td></tr>
-            <tr><td class="mono primary">G4</td><td>PrecisionAlloys Co.</td><td>Landing Gear Actuator</td><td>6</td><td class="text-amber mono">$228,000</td><td class="text-muted">2025-09-20</td><td class="text-muted">2025-10-30</td><td class="text-muted">—</td><td><span class="badge badge-blue">DISPATCHED</span></td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════════════════════════════════════════════ -->
-  <!-- PAGE: SUPPLIERS                                                     -->
-  <!-- ═══════════════════════════════════════════════════════════════════ -->
-  <div class="page" id="page-suppliers">
-    <div class="page-header">
-      <div><div class="page-title">Supplier Performance</div><div class="page-sub">KPIs · Scorecards · Analytics</div></div>
-      <div class="header-actions">
-        <button class="btn btn-ghost btn-sm">⬇ Export</button>
-        <button class="btn btn-primary btn-sm" onclick="showToast('Add supplier form...','info')">+ Add Supplier</button>
-      </div>
-    </div>
-
-    <div class="grid-2 mb-4">
-      <div class="panel">
-        <div class="panel-head"><div class="panel-title">Defect Rate by Supplier</div></div>
-        <div class="panel-body"><div class="chart-wrap-lg"><canvas id="chart-supplier-defect"></canvas></div></div>
-      </div>
-      <div class="panel">
-        <div class="panel-head"><div class="panel-title">On-Time Delivery Rate</div></div>
-        <div class="panel-body"><div class="chart-wrap-lg"><canvas id="chart-delivery-rate"></canvas></div></div>
-      </div>
-    </div>
-
-    <div class="panel">
-      <div class="panel-head"><div class="panel-title">Supplier Scorecards</div></div>
-      <div class="panel-body">
-        <div class="supplier-card">
-          <div class="supplier-top">
-            <div>
-              <div class="supplier-name">Global AeroParts Ltd.</div>
-              <div class="text-xs text-muted">Hamburg, Germany · AS9100 · 1 active order</div>
-            </div>
-            <div class="supplier-score score-a">A+</div>
-          </div>
-          <div class="meter-row"><div class="meter-label">On-Time Delivery</div><div class="meter-bar-wrap"><div class="meter-bar" style="width:96%;background:var(--green)"></div></div><div class="meter-val text-green">96%</div></div>
-          <div class="meter-row"><div class="meter-label">QC Pass Rate</div><div class="meter-bar-wrap"><div class="meter-bar" style="width:100%;background:var(--green)"></div></div><div class="meter-val text-green">100%</div></div>
-          <div class="flex-gap"><span class="badge badge-green">AS9100</span><span class="badge badge-cyan">RFID Enabled</span><span class="badge badge-blue">Digital Twin</span></div>
-        </div>
-        <div class="supplier-card">
-          <div class="supplier-top">
-            <div>
-              <div class="supplier-name">SkyForge Components Inc.</div>
-              <div class="text-xs text-muted">Seattle, USA · NADCAP · 1 active order</div>
-            </div>
-            <div class="supplier-score score-b">B+</div>
-          </div>
-          <div class="meter-row"><div class="meter-label">On-Time Delivery</div><div class="meter-bar-wrap"><div class="meter-bar" style="width:88%;background:var(--cyan)"></div></div><div class="meter-val text-cyan">88%</div></div>
-          <div class="meter-row"><div class="meter-label">QC Pass Rate</div><div class="meter-bar-wrap"><div class="meter-bar" style="width:92%;background:var(--cyan)"></div></div><div class="meter-val text-cyan">92%</div></div>
-          <div class="flex-gap"><span class="badge badge-cyan">NADCAP</span><span class="badge badge-amber">Shock Sensor</span></div>
-        </div>
-        <div class="supplier-card">
-          <div class="supplier-top">
-            <div>
-              <div class="supplier-name">AeroTech Structures S.A.</div>
-              <div class="text-xs text-muted">Toulouse, France · EASA Approved · 1 active order</div>
-            </div>
-            <div class="supplier-score score-c">C+</div>
-          </div>
-          <div class="meter-row"><div class="meter-label">On-Time Delivery</div><div class="meter-bar-wrap"><div class="meter-bar" style="width:74%;background:var(--amber)"></div></div><div class="meter-val text-amber">74%</div></div>
-          <div class="meter-row"><div class="meter-label">QC Pass Rate</div><div class="meter-bar-wrap"><div class="meter-bar" style="width:85%;background:var(--amber)"></div></div><div class="meter-val text-amber">85%</div></div>
-          <div class="flex-gap"><span class="badge badge-green">EASA</span></div>
-        </div>
-        <div class="supplier-card">
-          <div class="supplier-top">
-            <div>
-              <div class="supplier-name">PrecisionAlloys Co.</div>
-              <div class="text-xs text-muted">Birmingham, UK · ISO9001 · 1 active order</div>
-            </div>
-            <div class="supplier-score score-d">C</div>
-          </div>
-          <div class="meter-row"><div class="meter-label">On-Time Delivery</div><div class="meter-bar-wrap"><div class="meter-bar" style="width:61%;background:var(--red)"></div></div><div class="meter-val text-red">61%</div></div>
-          <div class="meter-row"><div class="meter-label">QC Pass Rate</div><div class="meter-bar-wrap"><div class="meter-bar" style="width:78%;background:var(--amber)"></div></div><div class="meter-val text-amber">78%</div></div>
-          <div class="flex-gap"><span class="badge badge-gray">ISO9001</span></div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════════════════════════════════════════════ -->
-  <!-- PAGE: QC REPORTS                                                    -->
-  <!-- ═══════════════════════════════════════════════════════════════════ -->
-  <div class="page" id="page-qc">
-    <div class="page-header">
-      <div><div class="page-title">Quality Control Reports</div><div class="page-sub">Inspection results · Version history · Approvals</div></div>
-      <div class="header-actions">
-        <button class="btn btn-primary btn-sm" onclick="showToast('QC report creation form...','info')">+ New QC Report</button>
-      </div>
-    </div>
-
-    <div class="grid-3 mb-4">
-      <div class="panel">
-        <div class="panel-head"><div class="panel-title">QC Results by Type</div></div>
-        <div class="panel-body"><div class="chart-wrap"><canvas id="chart-qc-type"></canvas></div></div>
-      </div>
-      <div class="panel">
-        <div class="panel-head"><div class="panel-title">Pass / Fail Trend</div></div>
-        <div class="panel-body"><div class="chart-wrap"><canvas id="chart-qc-passfail"></canvas></div></div>
-      </div>
-      <div class="panel">
-        <div class="panel-head"><div class="panel-title">Inspector Performance</div></div>
-        <div class="panel-body">
-          <div class="meter-row"><div class="meter-label">Jane Doe</div><div class="meter-bar-wrap"><div class="meter-bar" style="width:100%;background:var(--green)"></div></div><div class="meter-val text-green">2</div></div>
-          <div class="meter-row"><div class="meter-label">Ahmed Khan</div><div class="meter-bar-wrap"><div class="meter-bar" style="width:50%;background:var(--cyan)"></div></div><div class="meter-val text-cyan">1</div></div>
-          <div class="section-divider"></div>
-          <div class="text-xs text-muted" style="margin-top:8px">Certifications approved this period</div>
-          <div style="font-family:var(--font-head);font-size:22px;font-weight:700;color:var(--green);margin-top:4px">3 <span style="font-size:12px;color:var(--text3)">/ 3 passed</span></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="panel">
-      <div class="panel-head"><div class="panel-title">QC Report Log</div><span class="badge badge-green">3 reports</span></div>
-      <div class="panel-body">
-        <div class="search-bar" style="margin-bottom:12px">
-          <input class="search-input" placeholder="Search by report ID, part, or inspector..." oninput="filterTable(this,'qc-table')"/>
-          <select class="filter-select"><option>All Types</option><option>DIMENSIONAL_CHECK</option><option>NON_DESTRUCTIVE_TESTING</option><option>ENVIRONMENTAL_STRESS</option></select>
-          <select class="filter-select"><option>All Status</option><option>DRAFT</option><option>SUBMITTED</option><option>APPROVED</option><option>REJECTED</option></select>
-        </div>
-        <div class="tbl-wrap">
-          <table id="qc-table">
-            <thead><tr><th>Report ID</th><th>Part</th><th>Type</th><th>Inspector</th><th>Date</th><th>Version</th><th>Status</th><th>Actions</th></tr></thead>
-            <tbody>
-              <tr>
-                <td class="mono primary">QC-784512-A1</td>
-                <td>A320 Wing Assembly</td>
-                <td><span class="badge badge-blue">DIMENSIONAL</span></td>
-                <td>Jane Doe</td>
-                <td class="text-muted">2025-08-28</td>
-                <td class="text-muted mono">v2</td>
-                <td><span class="badge badge-green">APPROVED</span></td>
-                <td><button class="btn btn-ghost btn-sm" onclick="showToast('Viewing QC-784512-A1 — Dimensional & NDT Pass','info')">View</button></td>
-              </tr>
-              <tr>
-                <td class="mono primary">QC-784512-A1</td>
-                <td>A320 Wing Assembly</td>
-                <td><span class="badge badge-purple">NDT</span></td>
-                <td>Jane Doe</td>
-                <td class="text-muted">2025-08-28</td>
-                <td class="text-muted mono">v2</td>
-                <td><span class="badge badge-green">APPROVED</span></td>
-                <td><button class="btn btn-ghost btn-sm">View</button></td>
-              </tr>
-              <tr>
-                <td class="mono primary">QC-889234-Z9</td>
-                <td>B737 Fuselage Section</td>
-                <td><span class="badge badge-amber">ENVIRONMENTAL</span></td>
-                <td>Ahmed Khan</td>
-                <td class="text-muted">2025-09-01</td>
-                <td class="text-muted mono">v2</td>
-                <td><span class="badge badge-green">APPROVED</span></td>
-                <td><button class="btn btn-ghost btn-sm">View</button></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════════════════════════════════════════════ -->
-  <!-- PAGE: CERTIFICATIONS                                                -->
-  <!-- ═══════════════════════════════════════════════════════════════════ -->
-  <div class="page" id="page-certifications">
-    <div class="page-header">
-      <div><div class="page-title">Component Certifications</div><div class="page-sub">Immutable records · Material traceability · Digital signatures</div></div>
-      <div class="header-actions">
-        <button class="btn btn-ghost btn-sm">⬇ Export PDF</button>
-        <button class="btn btn-primary btn-sm" onclick="showToast('Certification issuance form...','info')">+ Issue Cert</button>
-      </div>
-    </div>
-
-    <div class="alert-strip info">🔒 Immutable certifications cannot be modified after approval. All changes are recorded in the audit log.</div>
-
-    <div class="grid-2 mb-4">
-      <div class="panel panel-accent">
-        <div class="panel-head">
-          <div class="panel-title">🔒 CERT-2025-AX-993</div>
-          <span class="badge badge-green">IMMUTABLE</span>
-        </div>
-        <div class="panel-body">
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
-            <div><div class="form-label" style="margin-bottom:3px">Part</div><div class="text-sm text-cyan">A320 Wing Assembly</div></div>
-            <div><div class="form-label" style="margin-bottom:3px">Part ID</div><div class="text-mono text-muted">A-320-WING-01</div></div>
-            <div><div class="form-label" style="margin-bottom:3px">Supplier</div><div class="text-sm">Global AeroParts Ltd.</div></div>
-            <div><div class="form-label" style="margin-bottom:3px">Certified</div><div class="text-sm text-muted">2025-09-02</div></div>
-            <div><div class="form-label" style="margin-bottom:3px">Inspector</div><div class="text-sm">Jane Doe (J.D.753)</div></div>
-            <div><div class="form-label" style="margin-bottom:3px">Approver</div><div class="text-sm">John Smith</div></div>
-            <div><div class="form-label" style="margin-bottom:3px">Digital Stamp</div><div class="text-mono text-green">CertifiedOK</div></div>
-            <div><div class="form-label" style="margin-bottom:3px">Signature</div><div class="text-mono text-green">✓ Electronically Signed</div></div>
-          </div>
-          <div class="section-divider"></div>
-          <div class="form-label" style="margin:10px 0 8px">Test Results</div>
-          <div class="cert-row"><div class="cert-lock">✅</div><div class="cert-info"><div class="cert-id">Dimensional Check</div><div class="cert-part">Length 15.002m · Width 3.499m · Deviation 0.002m</div></div><span class="badge badge-green">PASS</span></div>
-          <div class="cert-row"><div class="cert-lock">✅</div><div class="cert-info"><div class="cert-id">Non-Destructive Test</div><div class="cert-part">Ultrasonic scan · No internal defects detected</div></div><span class="badge badge-green">PASS</span></div>
-          <div class="cert-row"><div class="cert-lock">✅</div><div class="cert-info"><div class="cert-id">Load Test</div><div class="cert-part">150% rated capacity · No deformation</div></div><span class="badge badge-green">PASS</span></div>
-          <div class="section-divider"></div>
-          <div class="form-label" style="margin:10px 0 8px">Material Traceability</div>
-          <div class="cert-row"><div class="cert-lock">🧪</div><div class="cert-info"><div class="cert-id">ALU-BATCH-77X — Aluminum Alloy 7075</div><div class="cert-part">Hydro Aluminium, Germany · CERT-SUP-2025-442</div></div></div>
-          <div class="cert-row"><div class="cert-lock">🧪</div><div class="cert-info"><div class="cert-id">RES-BATCH-44P — Composite Resin X1</div><div class="cert-part">Hexion Inc., USA · CERT-SUP-2025-981</div></div></div>
-        </div>
-      </div>
-
-      <div class="panel">
-        <div class="panel-head"><div class="panel-title">Certification Registry</div></div>
-        <div class="panel-body">
-          <div class="cert-row">
-            <div class="cert-lock" style="font-size:18px">🔒</div>
-            <div class="cert-info">
-              <div class="cert-id">CERT-2025-AX-993</div>
-              <div class="cert-part">A320 Wing Assembly · Global AeroParts</div>
-            </div>
-            <div class="cert-meta">
-              <div class="text-green" style="font-size:10px">IMMUTABLE</div>
-              <div>2025-09-02</div>
-            </div>
-          </div>
-          <div style="height:160px;display:flex;align-items:center;justify-content:center;color:var(--text3);font-size:11px;letter-spacing:1px;border:1px dashed var(--line2);border-radius:var(--radius);margin-top:12px">
-            No additional certifications issued
-          </div>
-          <div class="section-divider"></div>
-          <div class="form-label" style="margin-bottom:8px">Cert Approval Stats</div>
-          <div class="kpi-grid" style="grid-template-columns:1fr 1fr;margin-bottom:0">
-            <div class="kpi-card green" style="padding:12px"><div class="kpi-label">Approved</div><div class="kpi-value green" style="font-size:22px">1</div></div>
-            <div class="kpi-card amber" style="padding:12px"><div class="kpi-label">Pending</div><div class="kpi-value amber" style="font-size:22px">0</div></div>
-          </div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════════════════════════════════════════════ -->
-  <!-- PAGE: IoT MONITOR                                                   -->
-  <!-- ═══════════════════════════════════════════════════════════════════ -->
-  <div class="page" id="page-iot">
-    <div class="page-header">
-      <div><div class="page-title">IoT Equipment Monitor</div><div class="page-sub">Live sensor feeds · Anomaly detection · Predictive maintenance</div></div>
-      <div class="header-actions">
-        <button class="btn btn-ghost btn-sm" id="iot-pause" onclick="toggleIoT(this)">⏸ Pause Feed</button>
-        <select class="filter-select" onchange="filterIoT(this.value)"><option value="ALL">All Facilities</option><option value="Hamburg">Hamburg Plant A</option><option value="Seattle">Seattle Plant B</option><option value="Birmingham">Birmingham Plant C</option></select>
-      </div>
-    </div>
-
-    <div class="alert-strip danger">🚨 CNC Mill Alpha-7 — Vibration 2.9 mm/s detected at 06:05 UTC. Alarm code W-VIBRATION-HIGH. Bearing inspection recommended.</div>
-    <div class="alert-strip warn">⚠ Climate Chamber CC-12 — Temperature at -54.8°C (setpoint -55°C). Monitor for test profile deviation.</div>
-
-    <!-- Live Gauges -->
-    <div class="gauge-grid mb-4">
-      <div class="gauge-card">
-        <div class="gauge-status warn"></div>
-        <div class="gauge-value text-amber" id="g-temp">43.8</div>
-        <div class="gauge-unit">°C</div>
-        <div class="gauge-name">CNC Mill · Temp</div>
-      </div>
-      <div class="gauge-card">
-        <div class="gauge-status crit"></div>
-        <div class="gauge-value text-red" id="g-vib">2.9</div>
-        <div class="gauge-unit">mm/s</div>
-        <div class="gauge-name">CNC Mill · Vibration</div>
-      </div>
-      <div class="gauge-card">
-        <div class="gauge-status ok"></div>
-        <div class="gauge-value text-cyan" id="g-spindle">82.1</div>
-        <div class="gauge-unit">% load</div>
-        <div class="gauge-name">CNC Mill · Spindle</div>
-      </div>
-      <div class="gauge-card">
-        <div class="gauge-status ok"></div>
-        <div class="gauge-value text-blue" id="g-chamber">-54.8</div>
-        <div class="gauge-unit">°C</div>
-        <div class="gauge-name">Climate Chamber</div>
-      </div>
-    </div>
-
-    <div class="grid-2 mb-4">
-      <div class="panel">
-        <div class="panel-head"><div class="panel-title">Temperature · CNC Mill Alpha-7</div><span class="badge badge-amber">Hamburg Plant A</span></div>
-        <div class="panel-body"><div class="chart-wrap-lg"><canvas id="chart-iot-temp"></canvas></div></div>
-      </div>
-      <div class="panel">
-        <div class="panel-head"><div class="panel-title">Vibration · CNC Mill Alpha-7</div><span class="badge badge-red">⚠ ALERT</span></div>
-        <div class="panel-body"><div class="chart-wrap-lg"><canvas id="chart-iot-vib"></canvas></div></div>
-      </div>
-    </div>
-
-    <div class="panel">
-      <div class="panel-head"><div class="panel-title">Recent Anomaly Log</div></div>
-      <div class="tbl-wrap">
-        <table>
-          <thead><tr><th>Timestamp</th><th>Device</th><th>Equipment</th><th>Facility</th><th>Reading</th><th>Alarm Code</th><th>Severity</th></tr></thead>
-          <tbody>
-            <tr><td class="mono text-muted">2025-09-01 06:05</td><td class="mono">p1-CNC-A7</td><td>CNC Milling Centre Alpha-7</td><td>Hamburg Plant A</td><td class="text-red">Vib: 2.9 mm/s · Temp: 43.8°C</td><td class="mono text-amber">W-VIBRATION-HIGH</td><td><span class="badge badge-red">CRITICAL</span></td></tr>
-            <tr><td class="mono text-muted">2025-08-31 16:00</td><td class="mono">p3-CONT-DHL</td><td>Container Tracker — DHL Shipment</td><td>FedEx Memphis Hub</td><td class="text-amber">Shock: 3.1G</td><td class="mono text-amber">W-SHOCK-EVENT</td><td><span class="badge badge-amber">WARNING</span></td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════════════════════════════════════════════ -->
-  <!-- PAGE: EQUIPMENT                                                     -->
-  <!-- ═══════════════════════════════════════════════════════════════════ -->
-  <div class="page" id="page-equipment">
-    <div class="page-header">
-      <div><div class="page-title">Equipment Registry</div><div class="page-sub">Manufacturing assets · IoT device assignments</div></div>
-      <div class="header-actions">
-        <button class="btn btn-primary btn-sm" onclick="showToast('Add equipment form...','info')">+ Add Equipment</button>
-      </div>
-    </div>
-    <div class="panel">
-      <div class="tbl-wrap">
-        <table>
-          <thead><tr><th>Equipment ID</th><th>Name</th><th>Type</th><th>Facility</th><th>Manufacturer</th><th>Model</th><th>Installed</th><th>IoT Devices</th><th>Status</th></tr></thead>
-          <tbody>
-            <tr><td class="mono primary">EQ-001</td><td>CNC Milling Centre Alpha-7</td><td class="text-muted">CNC_MILL</td><td>Hamburg Plant A</td><td>DMG Mori</td><td class="mono">DMU 85 monoBLOCK</td><td class="text-muted">2021-03-15</td><td><span class="badge badge-cyan">1 sensor</span></td><td><span class="badge badge-amber">⚠ WARN</span></td></tr>
-            <tr><td class="mono primary">EQ-002</td><td>Ultrasonic NDT Scanner Bay 3</td><td class="text-muted">NDT_SCANNER</td><td>Hamburg Plant A</td><td>Olympus</td><td class="mono">EPOCH 650</td><td class="text-muted">2022-07-01</td><td><span class="badge badge-gray">0 sensors</span></td><td><span class="badge badge-green">OK</span></td></tr>
-            <tr><td class="mono primary">EQ-003</td><td>Climate Chamber CC-12</td><td class="text-muted">ENV_CHAMBER</td><td>Seattle Plant B</td><td>Weiss Technik</td><td class="mono">SB 1000/70</td><td class="text-muted">2020-11-20</td><td><span class="badge badge-cyan">1 sensor</span></td><td><span class="badge badge-green">OK</span></td></tr>
-            <tr><td class="mono primary">EQ-004</td><td>Hydraulic Press HP-04</td><td class="text-muted">HYDRAULIC_PRESS</td><td>Birmingham Plant C</td><td>Schuler Group</td><td class="mono">MSP 800T</td><td class="text-muted">2019-05-10</td><td><span class="badge badge-gray">0 sensors</span></td><td><span class="badge badge-green">OK</span></td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════════════════════════════════════════════ -->
-  <!-- PAGE: AUDIT LOG                                                     -->
-  <!-- ═══════════════════════════════════════════════════════════════════ -->
-  <div class="page" id="page-audit">
-    <div class="page-header">
-      <div><div class="page-title">Audit Log</div><div class="page-sub">Complete action trail · Compliance · Attribution</div></div>
-      <div class="header-actions">
-        <button class="btn btn-ghost btn-sm">⬇ Export CSV</button>
-      </div>
-    </div>
-    <div class="search-bar">
-      <input class="search-input" placeholder="Search by user, entity, or action..." oninput="filterTable(this,'audit-table')"/>
-      <select class="filter-select"><option>All Actions</option><option>VIEW</option><option>CREATE</option><option>UPDATE</option><option>APPROVE</option><option>LOGIN</option></select>
-      <select class="filter-select"><option>All Entities</option><option>SUPPLIER</option><option>PURCHASE_ORDER</option><option>QC_REPORT</option><option>CERTIFICATION</option><option>SHIPMENT</option></select>
-    </div>
-    <div class="panel">
-      <div class="tbl-wrap">
-        <table id="audit-table">
-          <thead><tr><th>Timestamp</th><th>User</th><th>Action</th><th>Entity</th><th>Entity ID</th><th>IP Address</th><th>Outcome</th></tr></thead>
-          <tbody>
-            <tr><td class="mono text-muted">2025-09-02 10:00</td><td>Jane Doe</td><td><span class="badge badge-green">APPROVE</span></td><td>CERTIFICATION</td><td class="mono">CERT-2025-AX-993</td><td class="mono text-muted">10.0.1.12</td><td><span class="badge badge-green">SUCCESS</span></td></tr>
-            <tr><td class="mono text-muted">2025-09-01 17:00</td><td>Jane Doe</td><td><span class="badge badge-blue">CREATE</span></td><td>QC_REPORT</td><td class="mono">QC-889234-Z9</td><td class="mono text-muted">10.0.1.12</td><td><span class="badge badge-green">SUCCESS</span></td></tr>
-            <tr><td class="mono text-muted">2025-09-01 08:00</td><td>Ahmed Khan</td><td><span class="badge badge-blue">CREATE</span></td><td>QC_REPORT</td><td class="mono">QC-889234-Z9</td><td class="mono text-muted">10.0.1.33</td><td><span class="badge badge-green">SUCCESS</span></td></tr>
-            <tr><td class="mono text-muted">2025-08-29 11:30</td><td>Jane Doe</td><td><span class="badge badge-cyan">UPDATE</span></td><td>QC_REPORT</td><td class="mono">QC-784512-A1</td><td class="mono text-muted">10.0.1.12</td><td><span class="badge badge-green">SUCCESS</span></td></tr>
-            <tr><td class="mono text-muted">2025-08-28 15:00</td><td>John Smith</td><td><span class="badge badge-gray">VIEW</span></td><td>SHIPMENT</td><td class="mono">DHL-AE-20250820-001</td><td class="mono text-muted">10.0.1.88</td><td><span class="badge badge-green">SUCCESS</span></td></tr>
-            <tr><td class="mono text-muted">2025-08-28 09:00</td><td>Jane Doe</td><td><span class="badge badge-blue">CREATE</span></td><td>QC_REPORT</td><td class="mono">QC-784512-A1</td><td class="mono text-muted">10.0.1.12</td><td><span class="badge badge-green">SUCCESS</span></td></tr>
-            <tr><td class="mono text-muted">2025-07-15 09:00</td><td>Sarah Mitchell</td><td><span class="badge badge-blue">CREATE</span></td><td>PURCHASE_ORDER</td><td class="mono">G1</td><td class="mono text-muted">10.0.1.45</td><td><span class="badge badge-green">SUCCESS</span></td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-
-  <!-- ═══════════════════════════════════════════════════════════════════ -->
-  <!-- PAGE: USERS                                                         -->
-  <!-- ═══════════════════════════════════════════════════════════════════ -->
-  <div class="page" id="page-users">
-    <div class="page-header">
-      <div><div class="page-title">User Management</div><div class="page-sub">Roles · Permissions · Access control</div></div>
-      <div class="header-actions">
-        <button class="btn btn-primary btn-sm" onclick="showToast('User creation form...','info')">+ Add User</button>
-      </div>
-    </div>
-    <div class="panel">
-      <div class="tbl-wrap">
-        <table>
-          <thead><tr><th>Emp ID</th><th>Name</th><th>Role</th><th>Department</th><th>Email</th><th>Status</th></tr></thead>
-          <tbody>
-            <tr><td class="mono primary">EMP-001</td><td>Sarah Mitchell</td><td><span class="badge badge-blue">PROCUREMENT OFFICER</span></td><td>Procurement</td><td class="mono text-muted">s.mitchell@aeronetb.com</td><td><span class="badge badge-green">ACTIVE</span></td></tr>
-            <tr><td class="mono primary">EMP-002</td><td>Jane Doe</td><td><span class="badge badge-purple">QUALITY INSPECTOR</span></td><td>Quality Assurance</td><td class="mono text-muted">j.doe@aeronetb.com</td><td><span class="badge badge-green">ACTIVE</span></td></tr>
-            <tr><td class="mono primary">EMP-003</td><td>Ahmed Khan</td><td><span class="badge badge-purple">QUALITY INSPECTOR</span></td><td>Quality Assurance</td><td class="mono text-muted">a.khan@aeronetb.com</td><td><span class="badge badge-green">ACTIVE</span></td></tr>
-            <tr><td class="mono primary">EMP-004</td><td>John Smith</td><td><span class="badge badge-cyan">SUPPLY CHAIN MGR</span></td><td>Operations</td><td class="mono text-muted">j.smith@aeronetb.com</td><td><span class="badge badge-green">ACTIVE</span></td></tr>
-            <tr><td class="mono primary">EMP-005</td><td>Lisa Tremblay</td><td><span class="badge badge-amber">EQUIPMENT ENGINEER</span></td><td>Engineering</td><td class="mono text-muted">l.tremblay@aeronetb.com</td><td><span class="badge badge-green">ACTIVE</span></td></tr>
-            <tr><td class="mono primary">EMP-006</td><td>David Okafor</td><td><span class="badge badge-gray">AUDITOR</span></td><td>Compliance</td><td class="mono text-muted">d.okafor@aeronetb.com</td><td><span class="badge badge-green">ACTIVE</span></td></tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-  </div>
-
-  <!-- PAGE: NOTIFICATIONS -->
-  <div class="page" id="page-notifications">
-    <div class="page-header"><div><div class="page-title">Alerts &amp; Notifications</div><div class="page-sub">System-wide events requiring attention</div></div></div>
-    <div class="alert-strip danger">🔴 <strong>CRITICAL</strong> — CNC Mill Alpha-7 vibration at 2.9 mm/s. Alarm W-VIBRATION-HIGH. Hamburg Plant A — 2025-09-01 06:05 UTC</div>
-    <div class="alert-strip warn">⚠ <strong>WARNING</strong> — Shipment FDX-AE-20250901-007 shock event 3.1G logged at Memphis hub. Within limits. QC review recommended.</div>
-    <div class="alert-strip info">ℹ <strong>INFO</strong> — Purchase Order G3 (Turbine Blades) confirmed by AeroTech. ETA 2025-10-15.</div>
-    <div class="alert-strip warn">⚠ <strong>WARNING</strong> — Order G4 (Landing Gear Actuators) delayed. Current ETA 2025-10-30 vs planned 2025-10-20.</div>
-  </div>
-
-</main>
 </div>
 
-<!-- Toast container -->
+<!-- ── MAIN APP ── -->
+<div class="app" id="app" style="display:none">
+
+  <header class="topbar">
+    <div class="logo"><div class="logo-icon">✈</div>AeroNetB</div>
+    <span class="top-tag">ASCM · OPS CENTRE</span>
+    <div class="topbar-right">
+      <div style="display:flex;align-items:center;gap:6px">
+        <div class="status-dot" id="api-dot"></div>
+        <span id="api-label" style="font-size:10px;color:var(--text3)">CONNECTING</span>
+      </div>
+      <span style="color:var(--line2)">|</span>
+      <span class="clock" id="clock">--:--:--</span>
+      <span style="color:var(--line2)">|</span>
+      <span class="role-badge" id="role-display">...</span>
+      <span id="user-name" style="font-size:11px;color:var(--text2)"></span>
+      <button class="logout-btn" onclick="doLogout()">Sign Out</button>
+    </div>
+  </header>
+
+  <aside class="sidebar">
+    <div class="nav-section">
+      <div class="nav-label">Overview</div>
+      <div class="nav-item active" data-page="overview" onclick="nav(this)"><span class="nav-icon">◼</span> Dashboard</div>
+      <div class="nav-item" data-page="alerts" onclick="nav(this)"><span class="nav-icon">🔔</span> Alerts<span class="nav-badge" id="alert-count">0</span></div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Operations</div>
+      <div class="nav-item" data-page="shipments" onclick="nav(this)"><span class="nav-icon">🚢</span> Shipments</div>
+      <div class="nav-item" data-page="orders" onclick="nav(this)"><span class="nav-icon">📋</span> Orders</div>
+      <div class="nav-item" data-page="suppliers" onclick="nav(this)"><span class="nav-icon">🏭</span> Suppliers</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Quality</div>
+      <div class="nav-item" data-page="qc" onclick="nav(this)"><span class="nav-icon">🔬</span> QC Reports</div>
+      <div class="nav-item" data-page="certifications" onclick="nav(this)"><span class="nav-icon">🔒</span> Certifications</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Equipment</div>
+      <div class="nav-item" data-page="iot" onclick="nav(this)"><span class="nav-icon">📡</span> IoT Monitor</div>
+      <div class="nav-item" data-page="equipment" onclick="nav(this)"><span class="nav-icon">⚙️</span> Equipment</div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-label">Admin</div>
+      <div class="nav-item" data-page="audit" onclick="nav(this)"><span class="nav-icon">📜</span> Audit Log</div>
+      <div class="nav-item" data-page="users" onclick="nav(this)"><span class="nav-icon">👥</span> Users</div>
+    </div>
+  </aside>
+
+  <main class="main" id="main">
+
+    <!-- OVERVIEW -->
+    <div class="page active" id="page-overview">
+      <div class="page-header">
+        <div><div class="page-title">Operations Overview</div><div class="page-sub">Real-time supply chain visibility</div></div>
+        <div class="header-actions">
+          <button class="btn btn-ghost btn-sm" onclick="exportCSV('overview')">⬇ Export</button>
+          <button class="btn btn-primary btn-sm" onclick="loadOverview()">↺ Refresh</button>
+        </div>
+      </div>
+      <div class="kpi-grid" id="kpi-grid">
+        <div class="kpi-card blue"><div class="kpi-label">Active Suppliers</div><div class="kpi-value blue" id="kpi-suppliers">—</div></div>
+        <div class="kpi-card cyan"><div class="kpi-label">Open Orders</div><div class="kpi-value cyan" id="kpi-orders">—</div></div>
+        <div class="kpi-card amber"><div class="kpi-label">In Transit</div><div class="kpi-value amber" id="kpi-transit">—</div></div>
+        <div class="kpi-card green"><div class="kpi-label">QC Approved</div><div class="kpi-value green" id="kpi-qc">—</div></div>
+        <div class="kpi-card purple"><div class="kpi-label">Immutable Certs</div><div class="kpi-value purple" id="kpi-certs">—</div></div>
+        <div class="kpi-card red"><div class="kpi-label">IoT Anomalies</div><div class="kpi-value red" id="kpi-anomalies">—</div></div>
+      </div>
+      <div id="overview-alerts"></div>
+      <div class="grid-62 mb-4">
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title">🌍 Shipments in Transit</div><span class="badge badge-cyan">LIVE</span></div>
+          <div class="panel-body">
+            <div class="map-area">
+              <div class="map-grid"></div>
+              <div class="ship-dot" style="left:22%;top:38%"></div>
+              <div class="ship-dot" style="left:61%;top:31%;animation-delay:.5s"></div>
+              <div class="ship-dot" style="left:45%;top:55%;background:var(--amber);box-shadow:0 0 10px var(--amber)"></div>
+            </div>
+            <div class="section-divider"></div>
+            <div class="tbl-wrap"><table><thead><tr><th>Tracking</th><th>Carrier</th><th>Destination</th><th>Status</th></tr></thead><tbody id="overview-shipments-tbody"><tr class="loading-row"><td colspan="4">LOADING...</td></tr></tbody></table></div>
+          </div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title">⚡ Recent Activity</div><span style="font-size:10px;color:var(--text3)">Audit log</span></div>
+          <div class="panel-body"><div class="timeline" id="overview-activity"><div style="color:var(--text3);font-size:10px;text-align:center;padding:20px">LOADING...</div></div></div>
+        </div>
+      </div>
+      <div class="grid-3">
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title">QC Results by Type</div></div>
+          <div class="panel-body"><div class="chart-wrap"><canvas id="chart-qc-type-overview"></canvas></div></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title">Order Status</div></div>
+          <div class="panel-body"><div class="chart-wrap"><canvas id="chart-order-status"></canvas></div></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title">Supplier Delivery Rate</div></div>
+          <div class="panel-body" id="supplier-delivery-bars"><div style="color:var(--text3);font-size:10px;text-align:center;padding:20px">LOADING...</div></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- SHIPMENTS -->
+    <div class="page" id="page-shipments">
+      <div class="page-header">
+        <div><div class="page-title">Shipment Tracking</div><div class="page-sub">Global logistics visibility</div></div>
+        <div class="header-actions"><button class="btn btn-primary btn-sm" onclick="loadShipments()">↺ Refresh</button></div>
+      </div>
+      <div class="search-bar">
+        <input class="search-input" placeholder="Search by tracking number, carrier..." oninput="filterTable(this,'shipments-tbody')"/>
+        <select class="filter-select" onchange="loadShipments(this.value)"><option value="">All Status</option><option>PLACED</option><option>CONFIRMED</option><option>DISPATCHED</option><option>DELIVERED</option><option>COMPLETED</option></select>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><div class="panel-title">All Shipments</div><span class="badge badge-blue" id="shipments-count">0 shipments</span></div>
+        <div class="tbl-wrap"><table><thead><tr><th>Shipment ID</th><th>Order</th><th>Tracking</th><th>Carrier</th><th>Port of Entry</th><th>Dispatched</th><th>Arrived</th></tr></thead><tbody id="shipments-tbody"><tr class="loading-row"><td colspan="7">LOADING...</td></tr></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- ORDERS -->
+    <div class="page" id="page-orders">
+      <div class="page-header">
+        <div><div class="page-title">Purchase Orders</div><div class="page-sub">Procurement lifecycle</div></div>
+        <div class="header-actions"><button class="btn btn-primary btn-sm" onclick="loadOrders()">↺ Refresh</button></div>
+      </div>
+      <div class="search-bar">
+        <input class="search-input" placeholder="Search orders..." oninput="filterTable(this,'orders-tbody')"/>
+        <select class="filter-select" onchange="loadOrders(this.value)"><option value="">All Status</option><option>PLACED</option><option>CONFIRMED</option><option>DISPATCHED</option><option>DELIVERED</option><option>COMPLETED</option><option>CANCELLED</option></select>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><div class="panel-title">All Purchase Orders</div><span class="badge badge-blue" id="orders-count">0 orders</span></div>
+        <div class="tbl-wrap"><table><thead><tr><th>Order ID</th><th>Supplier</th><th>Order Date</th><th>Desired Delivery</th><th>Actual Delivery</th><th>Status</th></tr></thead><tbody id="orders-tbody"><tr class="loading-row"><td colspan="6">LOADING...</td></tr></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- SUPPLIERS -->
+    <div class="page" id="page-suppliers">
+      <div class="page-header">
+        <div><div class="page-title">Supplier Performance</div><div class="page-sub">KPIs · Scorecards · Analytics</div></div>
+        <div class="header-actions"><button class="btn btn-primary btn-sm" onclick="loadSuppliers()">↺ Refresh</button></div>
+      </div>
+      <div class="search-bar">
+        <input class="search-input" placeholder="Search suppliers..." oninput="filterTable(this,'suppliers-tbody')"/>
+        <select class="filter-select" onchange="loadSuppliers(this.value)"><option value="">All Accreditations</option><option>AS9100</option><option>NADCAP</option><option>ISO9001</option><option>EASA_APPROVED</option></select>
+      </div>
+      <div class="grid-2 mb-4">
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title">On-Time Delivery Rate</div></div>
+          <div class="panel-body" id="supplier-kpi-bars"><div style="color:var(--text3);font-size:10px;text-align:center;padding:20px">LOADING...</div></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title">QC Pass Rate by Supplier</div></div>
+          <div class="panel-body"><div class="chart-wrap"><canvas id="chart-supplier-qc"></canvas></div></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><div class="panel-title">Supplier Directory</div><span class="badge badge-blue" id="suppliers-count">0 suppliers</span></div>
+        <div class="tbl-wrap"><table><thead><tr><th>Supplier ID</th><th>Business Name</th><th>Contact Email</th><th>Accreditation</th><th>Total Orders</th><th>Completed</th><th>Avg Delay</th></tr></thead><tbody id="suppliers-tbody"><tr class="loading-row"><td colspan="7">LOADING...</td></tr></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- QC REPORTS -->
+    <div class="page" id="page-qc">
+      <div class="page-header">
+        <div><div class="page-title">QC Reports</div><div class="page-sub">Inspection results · Version history</div></div>
+        <div class="header-actions"><button class="btn btn-primary btn-sm" onclick="loadQC()">↺ Refresh</button></div>
+      </div>
+      <div class="search-bar">
+        <input class="search-input" placeholder="Search QC reports..." oninput="filterTable(this,'qc-tbody')"/>
+        <select class="filter-select" onchange="loadQC('','',this.value)"><option value="">All Status</option><option>DRAFT</option><option>SUBMITTED</option><option>APPROVED</option><option>REJECTED</option></select>
+        <select class="filter-select" onchange="loadQC('',this.value)"><option value="">All Types</option><option>VISUAL_INSPECTION</option><option>DIMENSIONAL_CHECK</option><option>NON_DESTRUCTIVE_TESTING</option><option>ENVIRONMENTAL_STRESS</option></select>
+      </div>
+      <div class="grid-2 mb-4">
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title">QC Status Breakdown</div></div>
+          <div class="panel-body"><div class="chart-wrap"><canvas id="chart-qc-status"></canvas></div></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title">Reports by Type</div></div>
+          <div class="panel-body"><div class="chart-wrap"><canvas id="chart-qc-types"></canvas></div></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><div class="panel-title">QC Report Log</div><span class="badge badge-blue" id="qc-count">0 reports</span></div>
+        <div class="tbl-wrap"><table><thead><tr><th>Report ID</th><th>Delivered Item</th><th>Type</th><th>Status</th><th>Created</th></tr></thead><tbody id="qc-tbody"><tr class="loading-row"><td colspan="5">LOADING...</td></tr></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- CERTIFICATIONS -->
+    <div class="page" id="page-certifications">
+      <div class="page-header">
+        <div><div class="page-title">Certifications</div><div class="page-sub">Immutable records · Material traceability</div></div>
+      </div>
+      <div class="alert-strip info">🔒 Certifications are immutable once approved — no modifications permitted after locking.</div>
+      <div id="certs-container"><div class="empty-state">Loading certifications...</div></div>
+    </div>
+
+    <!-- IOT MONITOR -->
+    <div class="page" id="page-iot">
+      <div class="page-header">
+        <div><div class="page-title">IoT Monitor</div><div class="page-sub">Live sensor feeds · Anomaly detection</div></div>
+        <div class="header-actions">
+          <button class="btn btn-ghost btn-sm" id="iot-pause-btn" onclick="toggleIoT(this)">⏸ Pause Feed</button>
+          <button class="btn btn-primary btn-sm" onclick="loadIoTAnomalies()">↺ Refresh</button>
+        </div>
+      </div>
+      <div class="gauge-grid" id="iot-gauges">
+        <div class="gauge-card"><div class="gauge-status warn"></div><div class="gauge-value text-amber" id="g-temp">—</div><div class="gauge-unit">°C</div><div class="gauge-name">CNC Mill · Temp</div></div>
+        <div class="gauge-card"><div class="gauge-status crit"></div><div class="gauge-value text-red" id="g-vib">—</div><div class="gauge-unit">mm/s</div><div class="gauge-name">CNC Mill · Vibration</div></div>
+        <div class="gauge-card"><div class="gauge-status ok"></div><div class="gauge-value text-cyan" id="g-spindle">—</div><div class="gauge-unit">% load</div><div class="gauge-name">Spindle Load</div></div>
+        <div class="gauge-card"><div class="gauge-status ok"></div><div class="gauge-value text-blue" id="g-chamber">—</div><div class="gauge-unit">°C</div><div class="gauge-name">Climate Chamber</div></div>
+      </div>
+      <div class="grid-2 mb-4">
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title">Temperature — CNC Mill Alpha-7</div></div>
+          <div class="panel-body"><div class="chart-wrap-lg"><canvas id="chart-iot-temp"></canvas></div></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title">Vibration — CNC Mill Alpha-7</div><span class="badge badge-red" id="vib-badge">LOADING</span></div>
+          <div class="panel-body"><div class="chart-wrap-lg"><canvas id="chart-iot-vib"></canvas></div></div>
+        </div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><div class="panel-title">Anomaly Log</div><span class="badge badge-red" id="anomaly-count">0</span></div>
+        <div class="tbl-wrap"><table><thead><tr><th>Timestamp</th><th>Device</th><th>Equipment</th><th>Reading</th><th>Detail</th><th>Severity</th></tr></thead><tbody id="anomaly-tbody"><tr class="loading-row"><td colspan="6">LOADING...</td></tr></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- EQUIPMENT -->
+    <div class="page" id="page-equipment">
+      <div class="page-header">
+        <div><div class="page-title">Equipment Registry</div><div class="page-sub">Manufacturing assets · IoT assignments</div></div>
+        <div class="header-actions"><button class="btn btn-primary btn-sm" onclick="loadEquipment()">↺ Refresh</button></div>
+      </div>
+      <div class="panel">
+        <div class="panel-head"><div class="panel-title">All Equipment</div><span class="badge badge-blue" id="equipment-count">0 items</span></div>
+        <div class="tbl-wrap"><table><thead><tr><th>ID</th><th>Name</th><th>Type</th><th>Facility</th><th>Manufacturer</th><th>Model</th><th>Installed</th><th>Status</th></tr></thead><tbody id="equipment-tbody"><tr class="loading-row"><td colspan="8">LOADING...</td></tr></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- AUDIT LOG -->
+    <div class="page" id="page-audit">
+      <div class="page-header">
+        <div><div class="page-title">Audit Log</div><div class="page-sub">Complete action trail · Compliance</div></div>
+        <div class="header-actions"><button class="btn btn-primary btn-sm" onclick="loadAudit()">↺ Refresh</button></div>
+      </div>
+      <div class="search-bar">
+        <input class="search-input" placeholder="Search audit log..." oninput="filterTable(this,'audit-tbody')"/>
+        <select class="filter-select" onchange="loadAudit(this.value)"><option value="">All Actions</option><option>VIEW</option><option>CREATE</option><option>UPDATE</option><option>APPROVE</option><option>LOGIN</option><option>LOGOUT</option></select>
+      </div>
+      <div class="panel">
+        <div class="tbl-wrap"><table><thead><tr><th>Timestamp</th><th>User</th><th>Action</th><th>Entity</th><th>Entity ID</th><th>Outcome</th></tr></thead><tbody id="audit-tbody"><tr class="loading-row"><td colspan="6">LOADING...</td></tr></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- USERS -->
+    <div class="page" id="page-users">
+      <div class="page-header">
+        <div><div class="page-title">Users</div><div class="page-sub">Roles · Access control</div></div>
+        <div class="header-actions"><button class="btn btn-primary btn-sm" onclick="loadUsers()">↺ Refresh</button></div>
+      </div>
+      <div class="panel">
+        <div class="tbl-wrap"><table><thead><tr><th>Emp ID</th><th>Name</th><th>Role(s)</th><th>Department</th><th>Email</th><th>Status</th></tr></thead><tbody id="users-tbody"><tr class="loading-row"><td colspan="6">LOADING...</td></tr></tbody></table></div>
+      </div>
+    </div>
+
+    <!-- ALERTS -->
+    <div class="page" id="page-alerts">
+      <div class="page-header"><div><div class="page-title">Alerts</div><div class="page-sub">System events requiring attention</div></div></div>
+      <div id="alerts-container"><div class="empty-state">Loading alerts...</div></div>
+    </div>
+
+  </main>
+</div>
+
 <div class="toast-container" id="toasts"></div>
 
 <script>
-const API = 'https://aeronet-database.onrender.com';
+// ── CONFIG ────────────────────────────────────────────────────────────────────
+const API = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? 'http://localhost:3000'
+  : window.location.origin;
+
+let token = localStorage.getItem('aeronet_token');
+let currentUser = null;
 let iotRunning = true;
-let iotInterval;
+let iotInterval = null;
+let iotTempChart = null, iotVibChart = null;
+const iotLabels = [], iotTempData = [], iotVibData = [];
 
-// ── NAV ──────────────────────────────────────────────────────────────────────
-function nav(el) {
-  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  el.classList.add('active');
-  const page = el.dataset.page;
-  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
-  document.getElementById('page-' + page).classList.add('active');
-  if (page === 'iot' && !iotRunning) return;
-  if (page === 'iot') startIoTSimulation();
-  if (page === 'suppliers') initSupplierCharts();
-  if (page === 'qc') initQCCharts();
-  if (page === 'overview') initOverviewCharts();
-}
+// ── AUTH ──────────────────────────────────────────────────────────────────────
+async function doLogin() {
+  const email    = document.getElementById('login-email').value.trim();
+  const password = document.getElementById('login-password').value;
+  const btn      = document.getElementById('login-btn');
+  const err      = document.getElementById('login-error');
 
-// ── CLOCK ─────────────────────────────────────────────────────────────────────
-function updateClock() {
-  document.getElementById('clock').textContent =
-    new Date().toLocaleTimeString('en-GB', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
-}
-setInterval(updateClock, 1000); updateClock();
+  if (!email || !password) { err.textContent = 'Please enter email and password.'; return; }
 
-// ── API HEALTH CHECK ──────────────────────────────────────────────────────────
-async function checkAPI() {
+  btn.disabled = true;
+  btn.textContent = 'Signing in...';
+  err.textContent = '';
+
   try {
-    const r = await fetch(API + '/health', {signal: AbortSignal.timeout(3000)});
-    const ok = r.ok;
-    document.getElementById('api-dot').style.background = ok ? 'var(--green)' : 'var(--amber)';
-    document.getElementById('api-label').textContent = ok ? 'API CONNECTED' : 'API PARTIAL';
-  } catch {
-    document.getElementById('api-dot').style.background = 'var(--red)';
-    document.getElementById('api-label').textContent = 'API OFFLINE — DEMO MODE';
+    const res = await fetch(`${API}/api/auth/login`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email, password })
+    });
+    const data = await res.json();
+
+    if (!res.ok || !data.success) {
+      err.textContent = data.message || 'Invalid credentials.';
+      btn.disabled = false; btn.textContent = 'Sign In →';
+      return;
+    }
+
+    token = data.token;
+    currentUser = data.user;
+    localStorage.setItem('aeronet_token', token);
+
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'grid';
+    document.getElementById('user-name').textContent = data.user.full_name;
+
+    initApp();
+  } catch (e) {
+    err.textContent = 'Cannot reach server. Check API URL.';
+    btn.disabled = false; btn.textContent = 'Sign In →';
   }
 }
-checkAPI(); setInterval(checkAPI, 30000);
+
+function doLogout() {
+  localStorage.removeItem('aeronet_token');
+  token = null;
+  currentUser = null;
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('app').style.display = 'none';
+  clearInterval(iotInterval);
+}
+
+// Auto-login if token exists
+async function tryAutoLogin() {
+  if (!token) return;
+  try {
+    const res = await apiFetch('/api/users/me');
+    if (res.success) {
+      currentUser = res.data;
+      document.getElementById('login-screen').style.display = 'none';
+      document.getElementById('app').style.display = 'grid';
+      document.getElementById('user-name').textContent = res.data.full_name;
+      initApp();
+    } else { localStorage.removeItem('aeronet_token'); token = null; }
+  } catch { localStorage.removeItem('aeronet_token'); token = null; }
+}
+
+// Press Enter to login
+document.addEventListener('keydown', e => {
+  if (e.key === 'Enter' && document.getElementById('login-screen').style.display !== 'none') doLogin();
+});
+
+// ── API HELPER ────────────────────────────────────────────────────────────────
+async function apiFetch(path, opts = {}) {
+  const res = await fetch(`${API}${path}`, {
+    ...opts,
+    headers: {
+      'Content-Type': 'application/json',
+      'Authorization': `Bearer ${token}`,
+      ...(opts.headers || {})
+    }
+  });
+  if (res.status === 401) { doLogout(); throw new Error('Session expired'); }
+  return res.json();
+}
+
+// ── CLOCK & API STATUS ────────────────────────────────────────────────────────
+setInterval(() => {
+  document.getElementById('clock').textContent =
+    new Date().toLocaleTimeString('en-GB', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
+}, 1000);
+
+async function checkAPIStatus() {
+  try {
+    const r = await fetch(`${API}/health`, { signal: AbortSignal.timeout(4000) });
+    const d = await r.json();
+    document.getElementById('api-dot').style.background = d.success ? 'var(--green)' : 'var(--amber)';
+    document.getElementById('api-label').textContent = d.success
+      ? `API OK · PG:${d.postgres} · MONGO:${d.mongodb}`
+      : 'API PARTIAL';
+  } catch {
+    document.getElementById('api-dot').style.background = 'var(--red)';
+    document.getElementById('api-label').textContent = 'API OFFLINE';
+  }
+}
+setInterval(checkAPIStatus, 30000);
 
 // ── TOAST ─────────────────────────────────────────────────────────────────────
-function showToast(msg, type='info') {
+function showToast(msg, type = 'info') {
   const c = document.getElementById('toasts');
   const t = document.createElement('div');
   t.className = `toast ${type}`;
   t.innerHTML = `<div class="toast-msg">${msg}</div><span class="toast-close" onclick="this.parentNode.remove()">✕</span>`;
   c.appendChild(t);
-  setTimeout(() => t.remove(), 5000);
+  setTimeout(() => t?.remove(), 5000);
+}
+
+// ── NAV ───────────────────────────────────────────────────────────────────────
+function nav(el) {
+  const page = el.dataset.page;
+
+  // RBAC guard — block access to pages not in user's allowed list
+  const role   = getUserRole();
+  const config = role ? (ROLE_CONFIG[role] || ROLE_CONFIG['SUPPLY_CHAIN_MANAGER']) : null;
+  if (config && !config.pages.includes(page)) {
+    showToast('Access denied — your role cannot view this section.', 'error');
+    return;
+  }
+
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  const loaders = {
+    overview: loadOverview, shipments: loadShipments, orders: loadOrders,
+    suppliers: loadSuppliers, qc: loadQC, certifications: loadCertifications,
+    iot: loadIoT, equipment: loadEquipment, audit: loadAudit, users: loadUsers,
+    alerts: loadAlerts
+  };
+  if (loaders[page]) loaders[page]();
 }
 
 // ── TABLE FILTER ──────────────────────────────────────────────────────────────
-function filterTable(input, tableId) {
+function filterTable(input, tbodyId) {
   const q = input.value.toLowerCase();
-  document.querySelectorAll(`#${tableId} tbody tr`).forEach(r => {
+  document.querySelectorAll(`#${tbodyId} tr`).forEach(r => {
     r.style.display = r.textContent.toLowerCase().includes(q) ? '' : 'none';
   });
 }
 
-// ── ROLE SWITCHER ─────────────────────────────────────────────────────────────
-const roleLabels = {
-  SUPPLY_CHAIN_MANAGER: 'SUPPLY CHAIN MGR',
-  PROCUREMENT_OFFICER:  'PROCUREMENT',
-  QUALITY_INSPECTOR:    'QC INSPECTOR',
-  EQUIPMENT_ENGINEER:   'EQUIP. ENGINEER',
-  AUDITOR:              'AUDITOR',
-};
-function switchRole(role) {
-  document.getElementById('role-display').textContent = roleLabels[role] || role;
-  showToast(`Role view switched to ${roleLabels[role]}`, 'success');
-}
-
-// ── CHART HELPERS ─────────────────────────────────────────────────────────────
-const chartDefaults = {
-  responsive: true, maintainAspectRatio: false,
-  plugins: { legend: { display: false } },
-};
-function lineDataset(label, data, color) {
-  return {
-    label, data,
-    borderColor: color, backgroundColor: color + '22',
-    borderWidth: 1.5, pointRadius: 2, pointHoverRadius: 4,
-    fill: true, tension: 0.4,
+// ── HELPERS ───────────────────────────────────────────────────────────────────
+function statusBadge(s) {
+  const map = {
+    COMPLETED:'badge-green',APPROVED:'badge-green',ACTIVE:'badge-green',SUCCESS:'badge-green',
+    DISPATCHED:'badge-blue',CONFIRMED:'badge-cyan',SUBMITTED:'badge-cyan',IN_TRANSIT:'badge-blue',
+    PLACED:'badge-gray',DRAFT:'badge-gray',
+    CANCELLED:'badge-red',REJECTED:'badge-red',FAILED:'badge-red',
+    DELIVERED:'badge-green',PENDING:'badge-amber',WARNING:'badge-amber',
   };
+  const cls = map[s] || 'badge-gray';
+  return `<span class="badge ${cls}">${s}</span>`;
 }
-function barDataset(label, data, colors) {
-  return { label, data, backgroundColor: colors, borderRadius: 3, borderWidth: 0 };
+function accBadge(s) {
+  const map = {AS9100:'badge-green',NADCAP:'badge-cyan',ISO9001:'badge-blue',EASA_APPROVED:'badge-purple',FAA_APPROVED:'badge-blue',PENDING:'badge-amber',SUSPENDED:'badge-red'};
+  return `<span class="badge ${map[s]||'badge-gray'}">${s}</span>`;
 }
+function fmtDate(d) { return d ? new Date(d).toLocaleDateString('en-GB') : '—'; }
+function fmtDateTime(d) { return d ? new Date(d).toLocaleString('en-GB',{dateStyle:'short',timeStyle:'short'}) : '—'; }
+function shortId(id) { return id ? id.substring(0,8)+'...' : '—'; }
+function destroyChart(id) { const c = Chart.getChart(id); if(c) c.destroy(); }
+
 const gridStyle = { color:'rgba(255,255,255,.05)', drawTicks:false };
-const axisTick = { color:'rgba(255,255,255,.35)', font:{ family:'Space Mono', size:9 } };
+const axisTick  = { color:'rgba(255,255,255,.35)', font:{ family:'Space Mono', size:9 } };
+const chartBase = { responsive:true, maintainAspectRatio:false, plugins:{ legend:{ display:false } } };
 
-// ── OVERVIEW CHARTS ───────────────────────────────────────────────────────────
-function initOverviewCharts() {
-  const months = ['Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar','Apr','May','Jun','Jul'];
-  const pass   = [12,15,18,14,20,17,22,19,25,21,23,18];
-  const fail   = [1,2,1,3,0,1,2,0,1,2,1,2];
+// ── INIT APP ──────────────────────────────────────────────────────────────────
+// ── RBAC — page access rules per role ────────────────────────────────────────
+const ROLE_CONFIG = {
+  PROCUREMENT_OFFICER: {
+    pages:   ['overview','alerts','orders','suppliers','shipments'],
+    default: 'orders',
+    label:   'Procurement Officer',
+    color:   '#3b82f6',
+  },
+  QUALITY_INSPECTOR: {
+    pages:   ['overview','alerts','qc','certifications','shipments'],
+    default: 'qc',
+    label:   'Quality Inspector',
+    color:   '#8b5cf6',
+  },
+  SUPPLY_CHAIN_MANAGER: {
+    pages:   ['overview','alerts','shipments','orders','suppliers','qc','certifications','iot','equipment'],
+    default: 'overview',
+    label:   'Supply Chain Manager',
+    color:   '#06b6d4',
+  },
+  EQUIPMENT_ENGINEER: {
+    pages:   ['overview','alerts','iot','equipment'],
+    default: 'iot',
+    label:   'Equipment Engineer',
+    color:   '#f59e0b',
+  },
+  AUDITOR: {
+    pages:   ['overview','alerts','shipments','orders','qc','certifications','audit','users'],
+    default: 'audit',
+    label:   'Auditor / Regulator',
+    color:   '#4d6480',
+  },
+};
 
-  destroyChart('chart-qc-trend');
-  new Chart(document.getElementById('chart-qc-trend'), {
-    type:'line',
-    data:{ labels:months, datasets:[lineDataset('Pass',pass,'#10b981'), lineDataset('Fail',fail,'#ef4444')] },
-    options:{
-      ...chartDefaults,
-      plugins:{ legend:{ display:true, labels:{ color:'#8fa3bf', font:{family:'Space Mono',size:9}, boxWidth:10 } } },
-      scales:{ x:{ grid:gridStyle, ticks:axisTick }, y:{ grid:gridStyle, ticks:axisTick } },
-    }
-  });
-
-  destroyChart('chart-order-status');
-  new Chart(document.getElementById('chart-order-status'), {
-    type:'doughnut',
-    data:{
-      labels:['Completed','Confirmed','Dispatched','Placed'],
-      datasets:[{ data:[2,1,1,0], backgroundColor:['#10b981','#06b6d4','#3b82f6','#8fa3bf'], borderWidth:0, hoverOffset:4 }]
-    },
-    options:{
-      ...chartDefaults,
-      plugins:{
-        legend:{display:true,position:'right',labels:{color:'#8fa3bf',font:{family:'Space Mono',size:9},boxWidth:10,padding:10}}
-      },
-      cutout:'65%',
-    }
-  });
+function getUserRole() {
+  if (!currentUser) return null;
+  const roles = (currentUser.roles || []).filter(Boolean);
+  const priority = ['SUPPLY_CHAIN_MANAGER','PROCUREMENT_OFFICER','QUALITY_INSPECTOR','EQUIPMENT_ENGINEER','AUDITOR'];
+  return priority.find(r => roles.includes(r)) || roles[0] || null;
 }
 
-// ── SUPPLIER CHARTS ───────────────────────────────────────────────────────────
-function initSupplierCharts() {
-  const suppliers = ['Global\nAeroParts','SkyForge\nInc.','AeroTech\nS.A.','Precision\nAlloys'];
+function applyRBAC() {
+  const role   = getUserRole();
+  const config = ROLE_CONFIG[role] || ROLE_CONFIG['SUPPLY_CHAIN_MANAGER'];
 
-  destroyChart('chart-supplier-defect');
-  new Chart(document.getElementById('chart-supplier-defect'), {
-    type:'bar',
-    data:{
-      labels:['Global AeroParts','SkyForge Inc.','AeroTech S.A.','PrecisionAlloys'],
-      datasets:[barDataset('Defect Rate %',[0,8,15,22],['#10b981','#06b6d4','#f59e0b','#ef4444'])]
-    },
-    options:{
-      ...chartDefaults,
-      scales:{ x:{ grid:{ display:false }, ticks:axisTick }, y:{ grid:gridStyle, ticks:{...axisTick,callback:v=>v+'%'} } }
-    }
+  // 1. Update role badge
+  const badge = document.getElementById('role-display');
+  badge.textContent   = config.label;
+  badge.style.borderColor = config.color;
+  badge.style.color       = config.color;
+
+  // 2. Show/hide sidebar nav items
+  document.querySelectorAll('.nav-item[data-page]').forEach(item => {
+    item.style.display = config.pages.includes(item.dataset.page) ? '' : 'none';
   });
 
-  destroyChart('chart-delivery-rate');
-  new Chart(document.getElementById('chart-delivery-rate'), {
-    type:'bar',
-    data:{
-      labels:['Global AeroParts','SkyForge Inc.','AeroTech S.A.','PrecisionAlloys'],
-      datasets:[barDataset('On-Time %',[96,88,74,61],['#10b981','#06b6d4','#f59e0b','#ef4444'])]
-    },
-    options:{
-      indexAxis:'y',
-      ...chartDefaults,
-      scales:{ x:{ grid:gridStyle, ticks:{...axisTick,callback:v=>v+'%'}, min:0,max:100 }, y:{ grid:{display:false}, ticks:axisTick } }
-    }
-  });
+  // 3. Read-only banner for auditors
+  const existing = document.getElementById('rbac-banner');
+  if (existing) existing.remove();
+  if (role === 'AUDITOR') {
+    const banner = document.createElement('div');
+    banner.id = 'rbac-banner';
+    banner.style.cssText = 'background:rgba(77,100,128,.12);border-bottom:1px solid rgba(77,100,128,.25);padding:5px 20px;font-size:10px;color:#4d6480;letter-spacing:1px;text-align:center;grid-column:2/3';
+    banner.textContent = '🔒 READ-ONLY MODE — Auditor access. No modifications permitted.';
+    const main = document.getElementById('main');
+    main.insertBefore(banner, main.firstChild);
+  }
+
+  // 4. Navigate to role default page
+  const defaultPage = config.pages.includes(config.default) ? config.default : config.pages[0];
+  const navItem = document.querySelector(`.nav-item[data-page="${defaultPage}"]`);
+  if (navItem) nav(navItem);
+  else loadOverview();
 }
 
-// ── QC CHARTS ─────────────────────────────────────────────────────────────────
-function initQCCharts() {
-  destroyChart('chart-qc-type');
-  new Chart(document.getElementById('chart-qc-type'), {
-    type:'pie',
-    data:{
-      labels:['Dimensional Check','NDT','Environmental Stress'],
-      datasets:[{ data:[1,1,1], backgroundColor:['#3b82f6','#8b5cf6','#f59e0b'], borderWidth:0, hoverOffset:4 }]
-    },
-    options:{
-      ...chartDefaults,
-      plugins:{legend:{display:true,position:'right',labels:{color:'#8fa3bf',font:{family:'Space Mono',size:9},boxWidth:10}}}
-    }
-  });
-
-  destroyChart('chart-qc-passfail');
-  const months = ['Jul','Aug','Sep'];
-  new Chart(document.getElementById('chart-qc-passfail'), {
-    type:'bar',
-    data:{
-      labels:months,
-      datasets:[
-        barDataset('Pass',[0,2,1],['#10b981','#10b981','#10b981']),
-        barDataset('Fail',[0,0,0],['#ef4444','#ef4444','#ef4444']),
-      ]
-    },
-    options:{
-      ...chartDefaults,
-      plugins:{legend:{display:true,labels:{color:'#8fa3bf',font:{family:'Space Mono',size:9},boxWidth:10}}},
-      scales:{ x:{ grid:{display:false}, ticks:axisTick, stacked:true }, y:{ grid:gridStyle, ticks:axisTick, stacked:true } }
-    }
-  });
+function initApp() {
+  checkAPIStatus();
+  applyRBAC();
 }
 
-// ── IOT CHARTS ────────────────────────────────────────────────────────────────
-let iotTempChart, iotVibChart;
-const iotLabels = [];
-const iotTempData = [];
-const iotVibData  = [];
+// ── OVERVIEW ──────────────────────────────────────────────────────────────────
+async function loadOverview() {
+  try {
+    const [summary, shipments, audit, qcInsights, kpis] = await Promise.all([
+      apiFetch('/api/dashboard/summary'),
+      apiFetch('/api/dashboard/shipment-status'),
+      apiFetch('/api/audit-logs?limit=6'),
+      apiFetch('/api/dashboard/qc-insights'),
+      apiFetch('/api/dashboard/supplier-kpis'),
+    ]);
+
+    // KPIs
+    if (summary.success) {
+      const d = summary.data;
+      document.getElementById('kpi-suppliers').textContent = d.active_suppliers ?? '—';
+      document.getElementById('kpi-orders').textContent    = d.open_orders ?? '—';
+      document.getElementById('kpi-transit').textContent   = d.in_transit_shipments ?? '—';
+      document.getElementById('kpi-certs').textContent     = d.approved_certs ?? '—';
+      const qcByStatus = d.qc_by_status || {};
+      document.getElementById('kpi-qc').textContent        = qcByStatus.APPROVED ?? 0;
+      document.getElementById('kpi-anomalies').textContent = '—';
+    }
+
+    // Shipments table
+    if (shipments.success) {
+      const tbody = document.getElementById('overview-shipments-tbody');
+      tbody.innerHTML = shipments.data.length ? shipments.data.map(s => `
+        <tr>
+          <td class="mono">${s.tracking_number || '—'}</td>
+          <td>${s.carrier_name || '—'}</td>
+          <td>${s.port_of_entry || '—'}</td>
+          <td>${statusBadge(s.order_status || 'UNKNOWN')}</td>
+        </tr>`).join('') : `<tr><td colspan="4" class="empty-state">No active shipments</td></tr>`;
+    }
+
+    // Activity feed from audit log
+    if (audit.success) {
+      const actionColors = {CREATE:'blue',UPDATE:'blue',APPROVE:'green',VIEW:'blue',LOGIN:'blue',LOGOUT:'blue',DELETE:'red'};
+      document.getElementById('overview-activity').innerHTML = audit.data.length
+        ? audit.data.map(a => `
+          <div class="tl-item">
+            <div class="tl-dot ${actionColors[a.action_type]||'blue'}"></div>
+            <div class="tl-content">
+              <div class="tl-title">${a.action_type} — ${a.entity_type}</div>
+              <div class="tl-sub">${a.full_name || 'System'} · ${a.entity_id?.substring(0,20) || ''}</div>
+            </div>
+            <div class="tl-time">${fmtDate(a.created_at)}</div>
+          </div>`).join('')
+        : '<div style="color:var(--text3);font-size:10px;text-align:center;padding:20px">No recent activity</div>';
+    }
+
+    // QC chart
+    if (qcInsights.success) {
+      const breakdown = qcInsights.data.breakdown || [];
+      const types = [...new Set(breakdown.map(r => r.report_type))];
+      const counts = types.map(t => breakdown.filter(r=>r.report_type===t).reduce((s,r)=>s+parseInt(r.count),0));
+      destroyChart('chart-qc-type-overview');
+      if (types.length) {
+        new Chart(document.getElementById('chart-qc-type-overview'), {
+          type:'doughnut',
+          data:{ labels:types, datasets:[{ data:counts, backgroundColor:['#3b82f6','#8b5cf6','#f59e0b','#10b981'], borderWidth:0, hoverOffset:4 }] },
+          options:{ ...chartBase, cutout:'65%', plugins:{ legend:{ display:true, position:'right', labels:{ color:'#8fa3bf', font:{family:'Space Mono',size:9}, boxWidth:10 } } } }
+        });
+      }
+
+      // Order status chart
+      const statusData = qcInsights.data.breakdown || [];
+      const statuses = ['DRAFT','SUBMITTED','APPROVED','REJECTED'];
+      const statusCounts = statuses.map(s => breakdown.filter(r=>r.current_status===s).reduce((a,r)=>a+parseInt(r.count),0));
+      destroyChart('chart-order-status');
+      new Chart(document.getElementById('chart-order-status'), {
+        type:'doughnut',
+        data:{ labels:statuses, datasets:[{ data:statusCounts, backgroundColor:['#4d6480','#06b6d4','#10b981','#ef4444'], borderWidth:0, hoverOffset:4 }] },
+        options:{ ...chartBase, cutout:'65%', plugins:{ legend:{ display:true, position:'right', labels:{ color:'#8fa3bf', font:{family:'Space Mono',size:9}, boxWidth:10 } } } }
+      });
+    }
+
+    // Supplier delivery bars
+    if (kpis.success && kpis.data.length) {
+      const bars = document.getElementById('supplier-delivery-bars');
+      bars.innerHTML = kpis.data.map(s => {
+        const total = parseInt(s.total_orders) || 0;
+        const completed = parseInt(s.completed_orders) || 0;
+        const rate = total ? Math.round((completed/total)*100) : 0;
+        const color = rate>=90?'var(--green)':rate>=70?'var(--cyan)':rate>=50?'var(--amber)':'var(--red)';
+        return `<div class="meter-row">
+          <div class="meter-label">${s.business_name}</div>
+          <div class="meter-bar-wrap"><div class="meter-bar" style="width:${rate}%;background:${color}"></div></div>
+          <div class="meter-val" style="color:${color}">${rate}%</div>
+        </div>`;
+      }).join('');
+    }
+
+  } catch (e) {
+    showToast('Failed to load overview: ' + e.message, 'error');
+  }
+}
+
+// ── SHIPMENTS ─────────────────────────────────────────────────────────────────
+async function loadShipments(status = '') {
+  const tbody = document.getElementById('shipments-tbody');
+  tbody.innerHTML = '<tr class="loading-row"><td colspan="7">LOADING...</td></tr>';
+  try {
+    const url = status ? `/api/shipments?order_id=${status}` : '/api/shipments';
+    const data = await apiFetch(url);
+    document.getElementById('shipments-count').textContent = `${data.data?.length || 0} shipments`;
+    tbody.innerHTML = data.data?.length
+      ? data.data.map(s => `<tr>
+          <td class="mono primary">${shortId(s.shipment_id)}</td>
+          <td class="mono">${shortId(s.order_id)}</td>
+          <td class="mono">${s.tracking_number || '—'}</td>
+          <td>${s.carrier_name || '—'}</td>
+          <td>${s.port_of_entry || '—'}</td>
+          <td class="text-muted">${fmtDate(s.dispatched_at)}</td>
+          <td class="text-muted">${s.arrived_at ? fmtDate(s.arrived_at) : statusBadge('IN_TRANSIT')}</td>
+        </tr>`).join('')
+      : '<tr><td colspan="7" class="empty-state">No shipments found</td></tr>';
+  } catch (e) {
+    tbody.innerHTML = `<tr><td colspan="7" class="empty-state">${e.message}</td></tr>`;
+  }
+}
+
+// ── ORDERS ────────────────────────────────────────────────────────────────────
+async function loadOrders(status = '') {
+  const tbody = document.getElementById('orders-tbody');
+  tbody.innerHTML = '<tr class="loading-row"><td colspan="6">LOADING...</td></tr>';
+  try {
+    const url = status ? `/api/orders?status=${status}` : '/api/orders';
+    const data = await apiFetch(url);
+    document.getElementById('orders-count').textContent = `${data.data?.length || 0} orders`;
+    tbody.innerHTML = data.data?.length
+      ? data.data.map(o => `<tr>
+          <td class="mono primary">${shortId(o.order_id)}</td>
+          <td>${o.supplier_name || shortId(o.supplier_id)}</td>
+          <td class="text-muted">${fmtDate(o.order_date)}</td>
+          <td class="text-muted">${fmtDate(o.desired_delivery_date)}</td>
+          <td class="text-muted">${fmtDate(o.actual_delivery_date)}</td>
+          <td>${statusBadge(o.status)}</td>
+        </tr>`).join('')
+      : '<tr><td colspan="6" class="empty-state">No orders found</td></tr>';
+  } catch (e) {
+    tbody.innerHTML = `<tr><td colspan="6" class="empty-state">${e.message}</td></tr>`;
+  }
+}
+
+// ── SUPPLIERS ─────────────────────────────────────────────────────────────────
+async function loadSuppliers(accreditation = '') {
+  const tbody = document.getElementById('suppliers-tbody');
+  tbody.innerHTML = '<tr class="loading-row"><td colspan="7">LOADING...</td></tr>';
+  try {
+    const [suppliers, kpis] = await Promise.all([
+      apiFetch(`/api/suppliers${accreditation ? '?accreditation='+accreditation : ''}`),
+      apiFetch('/api/dashboard/supplier-kpis')
+    ]);
+
+    document.getElementById('suppliers-count').textContent = `${suppliers.data?.length || 0} suppliers`;
+
+    // KPI bars
+    if (kpis.success && kpis.data.length) {
+      const colors = ['var(--green)','var(--cyan)','var(--amber)','var(--red)'];
+      document.getElementById('supplier-kpi-bars').innerHTML = kpis.data.map((s,i) => {
+        const total = parseInt(s.total_orders)||0;
+        const comp  = parseInt(s.completed_orders)||0;
+        const rate  = total ? Math.round((comp/total)*100) : 0;
+        const color = rate>=90?'var(--green)':rate>=70?'var(--cyan)':rate>=50?'var(--amber)':'var(--red)';
+        return `<div class="meter-row">
+          <div class="meter-label">${s.business_name}</div>
+          <div class="meter-bar-wrap"><div class="meter-bar" style="width:${rate}%;background:${color}"></div></div>
+          <div class="meter-val" style="color:${color}">${rate}%</div>
+        </div>`;
+      }).join('');
+
+      destroyChart('chart-supplier-qc');
+      const qcRates = kpis.data.map(s => {
+        const total   = parseInt(s.total_qc_reports)||0;
+        const passed  = parseInt(s.approved_qc)||0;
+        return total ? Math.round((passed/total)*100) : 0;
+      });
+      new Chart(document.getElementById('chart-supplier-qc'), {
+        type:'bar',
+        data:{ labels:kpis.data.map(s=>s.business_name), datasets:[{ data:qcRates, backgroundColor:kpis.data.map((_,i)=>colors[i]||'#3b82f6'), borderRadius:3, borderWidth:0 }] },
+        options:{ ...chartBase, scales:{ x:{grid:{display:false},ticks:axisTick}, y:{grid:gridStyle,ticks:{...axisTick,callback:v=>v+'%'},min:0,max:100} } }
+      });
+    }
+
+    tbody.innerHTML = suppliers.data?.length
+      ? suppliers.data.map(s => {
+          const kpi = kpis.data?.find(k => k.supplier_id === s.supplier_id) || {};
+          return `<tr>
+            <td class="mono primary">${shortId(s.supplier_id)}</td>
+            <td>${s.business_name}</td>
+            <td class="mono text-muted">${s.contact_email}</td>
+            <td>${accBadge(s.accreditation)}</td>
+            <td>${kpi.total_orders || 0}</td>
+            <td>${kpi.completed_orders || 0}</td>
+            <td class="${parseInt(kpi.avg_delay_days)>0?'text-red':'text-green'}">${kpi.avg_delay_days ? kpi.avg_delay_days + ' days' : '—'}</td>
+          </tr>`;
+        }).join('')
+      : '<tr><td colspan="7" class="empty-state">No suppliers found</td></tr>';
+  } catch (e) {
+    tbody.innerHTML = `<tr><td colspan="7" class="empty-state">${e.message}</td></tr>`;
+  }
+}
+
+// ── QC REPORTS ────────────────────────────────────────────────────────────────
+async function loadQC(delivered_item_id = '', report_type = '', status = '') {
+  const tbody = document.getElementById('qc-tbody');
+  tbody.innerHTML = '<tr class="loading-row"><td colspan="5">LOADING...</td></tr>';
+  try {
+    let url = '/api/qc-reports?limit=100';
+    if (status)     url += `&status=${status}`;
+    if (report_type) url += `&report_type=${report_type}`;
+    const data = await apiFetch(url);
+    document.getElementById('qc-count').textContent = `${data.data?.length || 0} reports`;
+
+    // Charts
+    const reports = data.data || [];
+    const byStatus = {};
+    const byType   = {};
+    reports.forEach(r => {
+      byStatus[r.current_status] = (byStatus[r.current_status]||0)+1;
+      byType[r.report_type]      = (byType[r.report_type]||0)+1;
+    });
+
+    destroyChart('chart-qc-status');
+    new Chart(document.getElementById('chart-qc-status'), {
+      type:'doughnut',
+      data:{ labels:Object.keys(byStatus), datasets:[{ data:Object.values(byStatus), backgroundColor:['#10b981','#06b6d4','#3b82f6','#ef4444'], borderWidth:0, hoverOffset:4 }] },
+      options:{ ...chartBase, cutout:'60%', plugins:{ legend:{ display:true, position:'right', labels:{ color:'#8fa3bf', font:{family:'Space Mono',size:9}, boxWidth:10 } } } }
+    });
+
+    destroyChart('chart-qc-types');
+    new Chart(document.getElementById('chart-qc-types'), {
+      type:'bar',
+      data:{ labels:Object.keys(byType), datasets:[{ data:Object.values(byType), backgroundColor:['#3b82f6','#8b5cf6','#f59e0b','#10b981'], borderRadius:3, borderWidth:0 }] },
+      options:{ ...chartBase, scales:{ x:{grid:{display:false},ticks:{...axisTick,maxRotation:15}}, y:{grid:gridStyle,ticks:axisTick} } }
+    });
+
+    tbody.innerHTML = reports.length
+      ? reports.map(r => `<tr>
+          <td class="mono primary">${shortId(r.qc_report_id)}</td>
+          <td class="mono text-muted">${shortId(r.delivered_item_id)}</td>
+          <td><span class="badge badge-blue">${r.report_type?.replace(/_/g,' ')}</span></td>
+          <td>${statusBadge(r.current_status)}</td>
+          <td class="text-muted">${fmtDate(r.created_at)}</td>
+        </tr>`).join('')
+      : '<tr><td colspan="5" class="empty-state">No QC reports found</td></tr>';
+  } catch (e) {
+    tbody.innerHTML = `<tr><td colspan="5" class="empty-state">${e.message}</td></tr>`;
+  }
+}
+
+// ── CERTIFICATIONS ────────────────────────────────────────────────────────────
+async function loadCertifications() {
+  const container = document.getElementById('certs-container');
+  container.innerHTML = '<div class="empty-state">Loading...</div>';
+  try {
+    // Get certifications via delivered items
+    const delivered = await apiFetch('/api/shipments');
+    // Use QC reports to find delivered items with certifications
+    const qc = await apiFetch('/api/qc-reports?limit=100');
+    const certIds = [...new Set((qc.data||[]).map(r => r.delivered_item_id).filter(Boolean))];
+
+    if (!certIds.length) {
+      container.innerHTML = '<div class="empty-state">No certifications found</div>';
+      return;
+    }
+
+    // Fetch each cert
+    const certs = await Promise.all(
+      certIds.slice(0,5).map(id => apiFetch(`/api/qc-reports?delivered_item_id=${id}`).catch(() => null))
+    );
+
+    container.innerHTML = `
+      <div class="panel panel-accent">
+        <div class="panel-head">
+          <div class="panel-title">🔒 Certification Registry</div>
+          <span class="badge badge-green">${certIds.length} items certified</span>
+        </div>
+        <div class="panel-body">
+          <div class="alert-strip info">ℹ Certifications approved via QC inspection flow. Once is_immutable = TRUE in the database, records cannot be modified.</div>
+          ${(qc.data||[]).slice(0,10).map(r => `
+            <div class="cert-row">
+              <div style="font-size:16px">${r.current_status==='APPROVED'?'🔒':'📄'}</div>
+              <div class="cert-info">
+                <div class="cert-id">${shortId(r.qc_report_id)} — ${r.report_type?.replace(/_/g,' ')}</div>
+                <div class="cert-part">Item: ${shortId(r.delivered_item_id)} · Serial: ${r.serial_number||'N/A'}</div>
+              </div>
+              <div style="text-align:right">
+                ${statusBadge(r.current_status)}
+                <div class="text-muted" style="font-size:10px;margin-top:4px">${fmtDate(r.created_at)}</div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>`;
+  } catch (e) {
+    container.innerHTML = `<div class="empty-state">${e.message}</div>`;
+  }
+}
+
+// ── IOT ───────────────────────────────────────────────────────────────────────
+async function loadIoT() {
+  await loadIoTAnomalies();
+  initIoTCharts();
+  startIoTSimulation();
+}
+
+async function loadIoTAnomalies() {
+  const tbody = document.getElementById('anomaly-tbody');
+  tbody.innerHTML = '<tr class="loading-row"><td colspan="6">LOADING...</td></tr>';
+  try {
+    const data = await apiFetch('/api/dashboard/iot-anomalies');
+    document.getElementById('anomaly-count').textContent = data.count || 0;
+    document.getElementById('kpi-anomalies').textContent = data.count || 0;
+
+    if (data.data?.length) {
+      document.getElementById('g-temp').textContent    = data.data[0]?.temperature_c?.toFixed(1) || '—';
+      document.getElementById('g-vib').textContent     = data.data[0]?.vibration_mm_s?.toFixed(2) || '—';
+      document.getElementById('g-spindle').textContent = data.data[0]?.rawReadings?.spindleLoad_pct?.toFixed(1) || '—';
+      document.getElementById('g-chamber').textContent = data.data.find(d=>d.equipmentName?.includes('Climate'))?.temperature_c?.toFixed(1) || '—';
+      document.getElementById('vib-badge').textContent = data.count > 0 ? '⚠ ANOMALIES DETECTED' : 'NORMAL';
+    }
+
+    tbody.innerHTML = data.data?.length
+      ? data.data.map(r => `<tr>
+          <td class="mono text-muted">${fmtDateTime(r.timestamp)}</td>
+          <td class="mono">${shortId(r.deviceId)}</td>
+          <td>${r.equipmentName || r.assignedToType || '—'}</td>
+          <td class="text-red">Temp: ${r.temperature_c||'—'}°C · Vib: ${r.vibration_mm_s||'—'} mm/s</td>
+          <td class="text-muted">${r.anomalyDetail || r.rawReadings?.alarmCodes?.join(', ') || '—'}</td>
+          <td><span class="badge badge-red">ANOMALY</span></td>
+        </tr>`).join('')
+      : '<tr><td colspan="6" class="empty-state">No anomalies detected</td></tr>';
+  } catch (e) {
+    tbody.innerHTML = `<tr><td colspan="6" class="empty-state">${e.message}</td></tr>`;
+  }
+}
 
 function initIoTCharts() {
-  for(let i=5;i>=0;i--) {
-    const d = new Date(); d.setMinutes(d.getMinutes()-i);
+  for (let i = 9; i >= 0; i--) {
+    const d = new Date(); d.setMinutes(d.getMinutes() - i);
     iotLabels.push(d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}));
   }
-  iotTempData.push(...[42.3,42.8,43.1,43.4,43.8,43.8]);
-  iotVibData.push(...[1.2,1.5,1.8,2.2,2.9,2.9]);
+  iotTempData.push(42.3,42.8,43.1,43.4,43.8,43.5,43.2,43.6,43.8,43.9);
+  iotVibData.push(1.2,1.5,1.8,2.2,2.9,2.5,2.1,2.4,2.7,2.9);
 
   destroyChart('chart-iot-temp');
   iotTempChart = new Chart(document.getElementById('chart-iot-temp'), {
     type:'line',
-    data:{ labels:[...iotLabels], datasets:[lineDataset('°C',iotTempData,'#f59e0b')] },
-    options:{
-      ...chartDefaults,
-      animation:false,
-      scales:{
-        x:{grid:gridStyle,ticks:axisTick},
-        y:{grid:gridStyle,ticks:axisTick,min:38,max:50,
-           afterDataLimits(a){a.max=50},
-        }
-      },
-      plugins:{
-        annotation:{annotations:{
-          limit:{type:'line',yMin:45,yMax:45,borderColor:'rgba(239,68,68,.5)',borderWidth:1,borderDash:[4,4]}
-        }}
-      }
-    }
+    data:{ labels:[...iotLabels], datasets:[{ label:'°C', data:[...iotTempData], borderColor:'#f59e0b', backgroundColor:'rgba(245,158,11,.1)', borderWidth:1.5, pointRadius:2, fill:true, tension:.4 }] },
+    options:{ ...chartBase, animation:false, scales:{ x:{grid:gridStyle,ticks:axisTick}, y:{grid:gridStyle,ticks:axisTick,min:38,max:55} } }
   });
 
   destroyChart('chart-iot-vib');
   iotVibChart = new Chart(document.getElementById('chart-iot-vib'), {
     type:'line',
-    data:{ labels:[...iotLabels], datasets:[lineDataset('mm/s',iotVibData,'#ef4444')] },
-    options:{
-      ...chartDefaults,
-      animation:false,
-      scales:{
-        x:{grid:gridStyle,ticks:axisTick},
-        y:{grid:gridStyle,ticks:axisTick,min:0,max:4}
-      }
-    }
+    data:{ labels:[...iotLabels], datasets:[{ label:'mm/s', data:[...iotVibData], borderColor:'#ef4444', backgroundColor:'rgba(239,68,68,.1)', borderWidth:1.5, pointRadius:2, fill:true, tension:.4 }] },
+    options:{ ...chartBase, animation:false, scales:{ x:{grid:gridStyle,ticks:axisTick}, y:{grid:gridStyle,ticks:axisTick,min:0,max:4} } }
   });
 }
 
 function startIoTSimulation() {
-  if(!document.getElementById('chart-iot-temp').chart) initIoTCharts();
   clearInterval(iotInterval);
   iotInterval = setInterval(() => {
-    if(!iotRunning) return;
+    if (!iotRunning) return;
     const t = new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
-    const newTemp = parseFloat((42+Math.random()*4).toFixed(1));
+    const newTemp = parseFloat((41+Math.random()*4).toFixed(1));
     const newVib  = parseFloat((1+Math.random()*2.5).toFixed(2));
 
     iotLabels.push(t); if(iotLabels.length>20) iotLabels.shift();
     iotTempData.push(newTemp); if(iotTempData.length>20) iotTempData.shift();
-    iotVibData.push(newVib);  if(iotVibData.length>20) iotVibData.shift();
+    iotVibData.push(newVib);   if(iotVibData.length>20) iotVibData.shift();
 
     if(iotTempChart){ iotTempChart.data.labels=[...iotLabels]; iotTempChart.data.datasets[0].data=[...iotTempData]; iotTempChart.update('none'); }
     if(iotVibChart) { iotVibChart.data.labels=[...iotLabels];  iotVibChart.data.datasets[0].data=[...iotVibData];  iotVibChart.update('none'); }
 
-    document.getElementById('g-temp').textContent = newTemp.toFixed(1);
-    document.getElementById('g-vib').textContent  = newVib.toFixed(2);
+    document.getElementById('g-temp').textContent    = newTemp.toFixed(1);
+    document.getElementById('g-vib').textContent     = newVib.toFixed(2);
     document.getElementById('g-spindle').textContent = (75+Math.random()*10).toFixed(1);
 
-    if(newVib > 2.5) showToast(`⚠ CNC Mill Alpha-7 vibration spike: ${newVib} mm/s`,'warning');
+    if (newVib > 2.5) showToast(`⚠ IoT: Vibration spike ${newVib} mm/s`, 'warning');
   }, 3000);
 }
 
 function toggleIoT(btn) {
   iotRunning = !iotRunning;
   btn.textContent = iotRunning ? '⏸ Pause Feed' : '▶ Resume Feed';
-  showToast(iotRunning ? 'IoT feed resumed' : 'IoT feed paused', 'info');
 }
 
-function filterIoT(v) { showToast(`Filtering IoT view: ${v}`, 'info'); }
-
-// ── CHART DESTROY ─────────────────────────────────────────────────────────────
-function destroyChart(id) {
-  const existing = Chart.getChart(id);
-  if(existing) existing.destroy();
+// ── EQUIPMENT ─────────────────────────────────────────────────────────────────
+async function loadEquipment() {
+  const tbody = document.getElementById('equipment-tbody');
+  tbody.innerHTML = '<tr class="loading-row"><td colspan="8">LOADING...</td></tr>';
+  try {
+    const data = await apiFetch('/api/equipment');
+    document.getElementById('equipment-count').textContent = `${data.data?.length || 0} items`;
+    tbody.innerHTML = data.data?.length
+      ? data.data.map(e => `<tr>
+          <td class="mono primary">${shortId(e.equipment_id)}</td>
+          <td>${e.equipment_name}</td>
+          <td class="text-muted">${e.equipment_type}</td>
+          <td>${e.facility_plant || '—'}</td>
+          <td>${e.manufacturer || '—'}</td>
+          <td class="mono text-muted">${e.model_number || '—'}</td>
+          <td class="text-muted">${fmtDate(e.install_date)}</td>
+          <td>${e.is_active ? statusBadge('ACTIVE') : statusBadge('INACTIVE')}</td>
+        </tr>`).join('')
+      : '<tr><td colspan="8" class="empty-state">No equipment found</td></tr>';
+  } catch (e) {
+    tbody.innerHTML = `<tr><td colspan="8" class="empty-state">${e.message}</td></tr>`;
+  }
 }
 
-// ── MISC ──────────────────────────────────────────────────────────────────────
-function refreshAll() {
-  showToast('Refreshing data from API...', 'info');
-  checkAPI();
-  initOverviewCharts();
+// ── AUDIT LOG ─────────────────────────────────────────────────────────────────
+async function loadAudit(action_type = '') {
+  const tbody = document.getElementById('audit-tbody');
+  tbody.innerHTML = '<tr class="loading-row"><td colspan="6">LOADING...</td></tr>';
+  try {
+    const url = `/api/audit-logs?limit=50${action_type ? '&action_type='+action_type : ''}`;
+    const data = await apiFetch(url);
+    tbody.innerHTML = data.data?.length
+      ? data.data.map(a => `<tr>
+          <td class="mono text-muted">${fmtDateTime(a.created_at)}</td>
+          <td>${a.full_name || shortId(a.emp_id)}</td>
+          <td>${statusBadge(a.action_type)}</td>
+          <td class="text-muted">${a.entity_type}</td>
+          <td class="mono text-muted">${a.entity_id?.substring(0,20) || '—'}</td>
+          <td>${statusBadge(a.outcome)}</td>
+        </tr>`).join('')
+      : '<tr><td colspan="6" class="empty-state">No audit records found</td></tr>';
+  } catch (e) {
+    tbody.innerHTML = `<tr><td colspan="6" class="empty-state">${e.message}</td></tr>`;
+  }
 }
-function exportCSV() { showToast('Exporting data as CSV...', 'success'); }
-function showShipmentDetail() { showToast('Loading shipment detail view...', 'info'); }
 
-// ── INIT ──────────────────────────────────────────────────────────────────────
+// ── USERS ─────────────────────────────────────────────────────────────────────
+async function loadUsers() {
+  const tbody = document.getElementById('users-tbody');
+  tbody.innerHTML = '<tr class="loading-row"><td colspan="6">LOADING...</td></tr>';
+  try {
+    const data = await apiFetch('/api/users');
+    tbody.innerHTML = data.data?.length
+      ? data.data.map(u => {
+          const roles = (u.roles||[]).filter(Boolean);
+          const roleMap = {PROCUREMENT_OFFICER:'badge-blue',QUALITY_INSPECTOR:'badge-purple',SUPPLY_CHAIN_MANAGER:'badge-cyan',EQUIPMENT_ENGINEER:'badge-amber',AUDITOR:'badge-gray'};
+          return `<tr>
+            <td class="mono primary">${shortId(u.emp_id)}</td>
+            <td>${u.full_name}</td>
+            <td>${roles.map(r=>`<span class="badge ${roleMap[r]||'badge-gray'}">${r.replace(/_/g,' ')}</span>`).join(' ')}</td>
+            <td>${u.department || '—'}</td>
+            <td class="mono text-muted">${u.email}</td>
+            <td>${u.is_active ? statusBadge('ACTIVE') : statusBadge('INACTIVE')}</td>
+          </tr>`;
+        }).join('')
+      : '<tr><td colspan="6" class="empty-state">No users found</td></tr>';
+  } catch (e) {
+    tbody.innerHTML = `<tr><td colspan="6" class="empty-state">${e.message}</td></tr>`;
+  }
+}
+
+// ── ALERTS ────────────────────────────────────────────────────────────────────
+async function loadAlerts() {
+  const container = document.getElementById('alerts-container');
+  try {
+    const [anomalies, orders] = await Promise.all([
+      apiFetch('/api/dashboard/iot-anomalies'),
+      apiFetch('/api/orders?status=DISPATCHED')
+    ]);
+
+    const alerts = [];
+    (anomalies.data||[]).forEach(a => {
+      alerts.push({ type:'danger', msg:`🔴 IoT Anomaly — ${a.equipmentName||'Device'} · ${a.anomalyDetail||'Threshold exceeded'} · ${fmtDateTime(a.timestamp)}` });
+    });
+    (orders.data||[]).forEach(o => {
+      const eta  = o.desired_delivery_date ? new Date(o.desired_delivery_date) : null;
+      const late = eta && eta < new Date();
+      if (late) alerts.push({ type:'warn', msg:`⚠ Order Delayed — ${o.supplier_name} · ETA was ${fmtDate(o.desired_delivery_date)}` });
+    });
+
+    document.getElementById('alert-count').textContent = alerts.length;
+    container.innerHTML = alerts.length
+      ? alerts.map(a => `<div class="alert-strip ${a.type}">${a.msg}</div>`).join('')
+      : '<div class="empty-state">No active alerts</div>';
+  } catch (e) {
+    container.innerHTML = `<div class="empty-state">${e.message}</div>`;
+  }
+}
+
+function exportCSV(page) { showToast('Export feature — connect to /api endpoints with ?format=csv', 'info'); }
+
+// ── BOOT ──────────────────────────────────────────────────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  initOverviewCharts();
-  setTimeout(() => showToast('Dashboard loaded — running in demo mode', 'info'), 800);
+  setInterval(() => {
+    document.getElementById('clock').textContent =
+      new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  }, 1000);
+  tryAutoLogin();
 });
 </script>
 </body>
