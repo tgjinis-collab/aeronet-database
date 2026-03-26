@@ -75,19 +75,7 @@ async function connectMongo() {
 // MIDDLEWARE
 // =============================================================================
 
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc:     ["'self'"],
-      scriptSrc:      ["'self'", "'unsafe-inline'", "cdnjs.cloudflare.com", "fonts.googleapis.com"],
-      scriptSrcAttr:  ["'unsafe-inline'"],
-      styleSrc:       ["'self'", "'unsafe-inline'", "fonts.googleapis.com"],
-      fontSrc:        ["'self'", "fonts.gstatic.com"],
-      connectSrc:     ["'self'"],
-      imgSrc:         ["'self'", "data:"],
-    },
-  },
-}));
+app.use(helmet());
 app.use(cors({ origin: process.env.CORS_ORIGIN || "*" }));
 app.use(express.json());
 app.use(morgan("dev"));
@@ -193,13 +181,13 @@ app.post(
         return res.status(401).json({ success: false, message: "Invalid credentials." });
 
       const token = jwt.sign(
-        { emp_id: user.emp_id, email: user.email, roles: user.roles.filter(Boolean) },
+        { emp_id: user.emp_id, email: user.email, roles: (user.roles || []).filter(Boolean) },
         process.env.JWT_SECRET || "changeme",
         { expiresIn: process.env.JWT_EXPIRES_IN || "8h" }
       );
 
       await logAudit(user.emp_id, "LOGIN", "USER", user.emp_id, "SUCCESS", req);
-      res.json({ success: true, token, user: { emp_id: user.emp_id, full_name: user.full_name, email: user.email, roles: user.roles } });
+      res.json({ success: true, token, user: { emp_id: user.emp_id, full_name: user.full_name, email: user.email, roles: (user.roles || []).filter(Boolean) } });
     } catch (err) {
       res.status(500).json({ success: false, message: err.message });
     }
