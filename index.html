@@ -542,6 +542,7 @@ async function doLogin() {
     currentUser = data.user;
     lsSet('aeronet_token', token);
 
+    resetAppState();
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app').style.display = 'grid';
     document.getElementById('user-name').textContent = data.user.full_name;
@@ -553,13 +554,60 @@ async function doLogin() {
   }
 }
 
+function resetAppState() {
+  // Stop IoT simulation
+  clearInterval(iotInterval);
+  iotInterval = null;
+  iotRunning = true;
+
+  // Destroy all charts so they don't throw on re-init
+  ['chart-qc-type-overview','chart-order-status','chart-supplier-qc',
+   'chart-qc-status','chart-qc-types','chart-iot-temp','chart-iot-vib'].forEach(destroyChart);
+  iotTempChart = null;
+  iotVibChart = null;
+
+  // Clear IoT data arrays
+  iotLabels.length = 0; iotTempData.length = 0; iotVibData.length = 0;
+
+  // Reset all table bodies to loading state
+  ['shipments-tbody','orders-tbody','suppliers-tbody','qc-tbody',
+   'equipment-tbody','audit-tbody','users-tbody','anomaly-tbody',
+   'overview-shipments-tbody'].forEach(id => {
+    const el = document.getElementById(id);
+    if (el) el.innerHTML = '<tr class="loading-row"><td colspan="8">—</td></tr>';
+  });
+
+  // Reset nav to overview
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  const overviewNav = document.querySelector('.nav-item[data-page="overview"]');
+  if (overviewNav) overviewNav.classList.add('active');
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  const overviewPage = document.getElementById('page-overview');
+  if (overviewPage) overviewPage.classList.add('active');
+
+  // Remove RBAC banner if present
+  const banner = document.getElementById('rbac-banner');
+  if (banner) banner.remove();
+
+  // Show all nav items (will be re-filtered by applyRBAC on next login)
+  document.querySelectorAll('.nav-item[data-page]').forEach(el => el.style.display = '');
+
+  // Reset login button
+  const btn = document.getElementById('login-btn');
+  if (btn) { btn.disabled = false; btn.textContent = 'Sign In →'; }
+
+  // Reset error
+  const err = document.getElementById('login-error');
+  if (err) err.textContent = '';
+}
+
 function doLogout() {
   lsRemove('aeronet_token');
   token = null;
   currentUser = null;
+  resetAppState();
   document.getElementById('login-screen').style.display = 'flex';
   document.getElementById('app').style.display = 'none';
-  clearInterval(iotInterval);
 }
 
 // Auto-login if token exists
@@ -569,6 +617,7 @@ async function tryAutoLogin() {
     const res = await apiFetch('/api/users/me');
     if (res.success) {
       currentUser = res.data;
+      resetAppState();
       document.getElementById('login-screen').style.display = 'none';
       document.getElementById('app').style.display = 'grid';
       document.getElementById('user-name').textContent = res.data.full_name;
@@ -1175,6 +1224,9 @@ function startIoTSimulation() {
 function toggleIoT(btn) {
   iotRunning = !iotRunning;
   btn.textContent = iotRunning ? '⏸ Pause Feed' : '▶ Resume Feed';
+  // Also reset the pause button label on the DOM element by id
+  const pauseBtn = document.getElementById('iot-pause-btn');
+  if (pauseBtn) pauseBtn.textContent = iotRunning ? '⏸ Pause Feed' : '▶ Resume Feed';
 }
 
 // ── EQUIPMENT ─────────────────────────────────────────────────────────────────
