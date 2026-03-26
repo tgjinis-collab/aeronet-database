@@ -1272,7 +1272,6 @@ app.get("/api/dashboard/summary", authenticate, async (req, res) => {
 });
 
 app.get("/api/dashboard/supplier-kpis", authenticate,
-  authorize("SUPPLY_CHAIN_MANAGER", "PROCUREMENT_OFFICER", "AUDITOR"),
   async (req, res) => {
     try {
       const { rows } = await pgPool.query(
