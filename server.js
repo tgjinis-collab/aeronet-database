@@ -5,7 +5,7 @@
 // Stack:
 //   Express 4        — HTTP server & routing
 //   pg (node-postgres)— PostgreSQL client
-//   mongodb          — MongoDB native driver
+//   mongodb          —A MongoDB native driver
 //   jsonwebtoken     — JWT auth
 //   bcryptjs         — password hashing
 //   express-validator— request validation
@@ -38,6 +38,14 @@ const path = require("path");
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
+
+// ── Safe roles parser — handles array, postgres string "{ROLE1,ROLE2}", or null
+function parseRoles(r) {
+  if (!r) return [];
+  if (Array.isArray(r)) return r.filter(Boolean);
+  if (typeof r === 'string') return r.replace(/^{|}$/g,'').split(',').filter(Boolean);
+  return [];
+}
 
 // =============================================================================
 // DATABASE CONNECTIONS
@@ -194,13 +202,13 @@ app.post(
         return res.status(401).json({ success: false, message: "Invalid credentials." });
 
       const token = jwt.sign(
-        { emp_id: user.emp_id, email: user.email, roles: (user.roles || []).filter(Boolean) },
+        { emp_id: user.emp_id, email: user.email, roles: parseRoles(user.roles) },
         process.env.JWT_SECRET || "changeme",
         { expiresIn: process.env.JWT_EXPIRES_IN || "8h" }
       );
 
       await logAudit(user.emp_id, "LOGIN", "USER", user.emp_id, "SUCCESS", req);
-      res.json({ success: true, token, user: { emp_id: user.emp_id, full_name: user.full_name, email: user.email, roles: (user.roles || []).filter(Boolean) } });
+      res.json({ success: true, token, user: { emp_id: user.emp_id, full_name: user.full_name, email: user.email, roles: parseRoles(user.roles) } });
     } catch (err) {
       res.status(500).json({ success: false, message: err.message });
     }
