@@ -5,7 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>AeroNetB — Operations Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&display=swap" rel="stylesheet"/>
-<script src="/chart.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -327,7 +327,7 @@ td.mono{font-family:var(--font-mono);font-size:10px}
       </div>
       <div class="search-bar">
         <input class="search-input" placeholder="Search by tracking number, carrier..." oninput="filterTable(this,'shipments-tbody')"/>
-        <select class="filter-select" onchange="loadShipments(this.value)"><option value="">All Status</option><option>PLACED</option><option>CONFIRMED</option><option>DISPATCHED</option><option>DELIVERED</option><option>COMPLETED</option></select>
+        <select class="filter-select" onchange="loadShipments()"><option value="">All Carriers</option><option>DHL</option><option>FedEx</option><option>UPS</option></select>
       </div>
       <div class="panel">
         <div class="panel-head"><div class="panel-title">All Shipments</div><span class="badge badge-blue" id="shipments-count">0 shipments</span></div>
@@ -499,7 +499,12 @@ const API = window.location.hostname === 'localhost' || window.location.hostname
   ? 'http://localhost:3000'
   : window.location.origin;
 
-let token = localStorage.getItem('aeronet_token');
+// Safe localStorage (throws in private/incognito on some browsers)
+function lsGet(k) { try { return localStorage.getItem(k); } catch { return null; } }
+function lsSet(k,v) { try { localStorage.setItem(k,v); } catch {} }
+function lsRemove(k) { try { localStorage.removeItem(k); } catch {} }
+
+let token = lsGet('aeronet_token');
 let currentUser = null;
 let iotRunning = true;
 let iotInterval = null;
@@ -535,7 +540,7 @@ async function doLogin() {
 
     token = data.token;
     currentUser = data.user;
-    localStorage.setItem('aeronet_token', token);
+    lsSet('aeronet_token', token);
 
     document.getElementById('login-screen').style.display = 'none';
     document.getElementById('app').style.display = 'grid';
@@ -549,7 +554,7 @@ async function doLogin() {
 }
 
 function doLogout() {
-  localStorage.removeItem('aeronet_token');
+  lsRemove('aeronet_token');
   token = null;
   currentUser = null;
   document.getElementById('login-screen').style.display = 'flex';
@@ -568,8 +573,8 @@ async function tryAutoLogin() {
       document.getElementById('app').style.display = 'grid';
       document.getElementById('user-name').textContent = res.data.full_name;
       initApp();
-    } else { localStorage.removeItem('aeronet_token'); token = null; }
-  } catch { localStorage.removeItem('aeronet_token'); token = null; }
+    } else { lsRemove('aeronet_token'); token = null; }
+  } catch { lsRemove('aeronet_token'); token = null; }
 }
 
 // Press Enter to login
@@ -588,15 +593,16 @@ async function apiFetch(path, opts = {}) {
     }
   });
   if (res.status === 401) { doLogout(); throw new Error('Session expired'); }
-  return res.json();
+  const ct = res.headers.get('content-type') || '';
+  if (!ct.includes('application/json')) {
+    throw new Error(`Server returned non-JSON response (${res.status})`);
+  }
+  const data = await res.json();
+  if (!res.ok && !data.success) throw new Error(data.message || `HTTP ${res.status}`);
+  return data;
 }
 
 // ── CLOCK & API STATUS ────────────────────────────────────────────────────────
-setInterval(() => {
-  document.getElementById('clock').textContent =
-    new Date().toLocaleTimeString('en-GB', {hour:'2-digit',minute:'2-digit',second:'2-digit'});
-}, 1000);
-
 async function checkAPIStatus() {
   try {
     const r = await fetch(`${API}/health`, { signal: AbortSignal.timeout(4000) });
@@ -674,7 +680,21 @@ function accBadge(s) {
 function fmtDate(d) { return d ? new Date(d).toLocaleDateString('en-GB') : '—'; }
 function fmtDateTime(d) { return d ? new Date(d).toLocaleString('en-GB',{dateStyle:'short',timeStyle:'short'}) : '—'; }
 function shortId(id) { return id ? id.substring(0,8)+'...' : '—'; }
-function destroyChart(id) { const c = Chart.getChart(id); if(c) c.destroy(); }
+function destroyChart(id) {
+  if (typeof Chart === 'undefined') return;
+  const ch = Chart.getChart(id);
+  if (ch) ch.destroy();
+}
+function makeChart(id, config) {
+  if (typeof Chart === 'undefined') {
+    console.warn('Chart.js not loaded — charts unavailable');
+    return null;
+  }
+  destroyChart(id);
+  const el = document.getElementById(id);
+  if (!el) return null;
+  return new Chart(el, config);
+}
 
 const gridStyle = { color:'rgba(255,255,255,.05)', drawTicks:false };
 const axisTick  = { color:'rgba(255,255,255,.35)', font:{ family:'Space Mono', size:9 } };
@@ -764,6 +784,8 @@ function initApp() {
 // ── OVERVIEW ──────────────────────────────────────────────────────────────────
 async function loadOverview() {
   try {
+    const role = getUserRole();
+    // Fetch only what this role is allowed to see
     const [summary, shipments, audit, qcInsights, kpis] = await Promise.all([
       apiFetch('/api/dashboard/summary'),
       apiFetch('/api/dashboard/shipment-status'),
@@ -781,8 +803,13 @@ async function loadOverview() {
       document.getElementById('kpi-certs').textContent     = d.approved_certs ?? '—';
       const qcByStatus = d.qc_by_status || {};
       document.getElementById('kpi-qc').textContent        = qcByStatus.APPROVED ?? 0;
-      document.getElementById('kpi-anomalies').textContent = '—';
     }
+
+    // IoT anomalies KPI
+    try {
+      const iot = await apiFetch('/api/dashboard/iot-anomalies');
+      document.getElementById('kpi-anomalies').textContent = iot.count ?? 0;
+    } catch { document.getElementById('kpi-anomalies').textContent = '—'; }
 
     // Shipments table
     if (shipments.success) {
@@ -819,19 +846,18 @@ async function loadOverview() {
       const counts = types.map(t => breakdown.filter(r=>r.report_type===t).reduce((s,r)=>s+parseInt(r.count),0));
       destroyChart('chart-qc-type-overview');
       if (types.length) {
-        new Chart(document.getElementById('chart-qc-type-overview'), {
+        makeChart('chart-qc-type-overview', {
           type:'doughnut',
           data:{ labels:types, datasets:[{ data:counts, backgroundColor:['#3b82f6','#8b5cf6','#f59e0b','#10b981'], borderWidth:0, hoverOffset:4 }] },
           options:{ ...chartBase, cutout:'65%', plugins:{ legend:{ display:true, position:'right', labels:{ color:'#8fa3bf', font:{family:'Space Mono',size:9}, boxWidth:10 } } } }
         });
       }
 
-      // Order status chart
-      const statusData = qcInsights.data.breakdown || [];
+      // Order status chart — QC status breakdown
       const statuses = ['DRAFT','SUBMITTED','APPROVED','REJECTED'];
       const statusCounts = statuses.map(s => breakdown.filter(r=>r.current_status===s).reduce((a,r)=>a+parseInt(r.count),0));
       destroyChart('chart-order-status');
-      new Chart(document.getElementById('chart-order-status'), {
+      makeChart('chart-order-status', {
         type:'doughnut',
         data:{ labels:statuses, datasets:[{ data:statusCounts, backgroundColor:['#4d6480','#06b6d4','#10b981','#ef4444'], borderWidth:0, hoverOffset:4 }] },
         options:{ ...chartBase, cutout:'65%', plugins:{ legend:{ display:true, position:'right', labels:{ color:'#8fa3bf', font:{family:'Space Mono',size:9}, boxWidth:10 } } } }
@@ -864,7 +890,7 @@ async function loadShipments(status = '') {
   const tbody = document.getElementById('shipments-tbody');
   tbody.innerHTML = '<tr class="loading-row"><td colspan="7">LOADING...</td></tr>';
   try {
-    const url = status ? `/api/shipments?order_id=${status}` : '/api/shipments';
+    const url = '/api/shipments';
     const data = await apiFetch(url);
     document.getElementById('shipments-count').textContent = `${data.data?.length || 0} shipments`;
     tbody.innerHTML = data.data?.length
@@ -939,7 +965,7 @@ async function loadSuppliers(accreditation = '') {
         const passed  = parseInt(s.approved_qc)||0;
         return total ? Math.round((passed/total)*100) : 0;
       });
-      new Chart(document.getElementById('chart-supplier-qc'), {
+      makeChart('chart-supplier-qc', {
         type:'bar',
         data:{ labels:kpis.data.map(s=>s.business_name), datasets:[{ data:qcRates, backgroundColor:kpis.data.map((_,i)=>colors[i]||'#3b82f6'), borderRadius:3, borderWidth:0 }] },
         options:{ ...chartBase, scales:{ x:{grid:{display:false},ticks:axisTick}, y:{grid:gridStyle,ticks:{...axisTick,callback:v=>v+'%'},min:0,max:100} } }
@@ -986,14 +1012,14 @@ async function loadQC(delivered_item_id = '', report_type = '', status = '') {
     });
 
     destroyChart('chart-qc-status');
-    new Chart(document.getElementById('chart-qc-status'), {
+    makeChart('chart-qc-status', {
       type:'doughnut',
       data:{ labels:Object.keys(byStatus), datasets:[{ data:Object.values(byStatus), backgroundColor:['#10b981','#06b6d4','#3b82f6','#ef4444'], borderWidth:0, hoverOffset:4 }] },
       options:{ ...chartBase, cutout:'60%', plugins:{ legend:{ display:true, position:'right', labels:{ color:'#8fa3bf', font:{family:'Space Mono',size:9}, boxWidth:10 } } } }
     });
 
     destroyChart('chart-qc-types');
-    new Chart(document.getElementById('chart-qc-types'), {
+    makeChart('chart-qc-types', {
       type:'bar',
       data:{ labels:Object.keys(byType), datasets:[{ data:Object.values(byType), backgroundColor:['#3b82f6','#8b5cf6','#f59e0b','#10b981'], borderRadius:3, borderWidth:0 }] },
       options:{ ...chartBase, scales:{ x:{grid:{display:false},ticks:{...axisTick,maxRotation:15}}, y:{grid:gridStyle,ticks:axisTick} } }
@@ -1018,9 +1044,7 @@ async function loadCertifications() {
   const container = document.getElementById('certs-container');
   container.innerHTML = '<div class="empty-state">Loading...</div>';
   try {
-    // Get certifications via delivered items
-    const delivered = await apiFetch('/api/shipments');
-    // Use QC reports to find delivered items with certifications
+    // Load QC reports to show certification status per delivered item
     const qc = await apiFetch('/api/qc-reports?limit=100');
     const certIds = [...new Set((qc.data||[]).map(r => r.delivered_item_id).filter(Boolean))];
 
@@ -1101,6 +1125,8 @@ async function loadIoTAnomalies() {
 }
 
 function initIoTCharts() {
+  // Clear arrays on every init to prevent infinite growth on re-visits
+  iotLabels.length = 0; iotTempData.length = 0; iotVibData.length = 0;
   for (let i = 9; i >= 0; i--) {
     const d = new Date(); d.setMinutes(d.getMinutes() - i);
     iotLabels.push(d.toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'}));
@@ -1109,14 +1135,14 @@ function initIoTCharts() {
   iotVibData.push(1.2,1.5,1.8,2.2,2.9,2.5,2.1,2.4,2.7,2.9);
 
   destroyChart('chart-iot-temp');
-  iotTempChart = new Chart(document.getElementById('chart-iot-temp'), {
+  iotTempChart = makeChart('chart-iot-temp', {
     type:'line',
     data:{ labels:[...iotLabels], datasets:[{ label:'°C', data:[...iotTempData], borderColor:'#f59e0b', backgroundColor:'rgba(245,158,11,.1)', borderWidth:1.5, pointRadius:2, fill:true, tension:.4 }] },
     options:{ ...chartBase, animation:false, scales:{ x:{grid:gridStyle,ticks:axisTick}, y:{grid:gridStyle,ticks:axisTick,min:38,max:55} } }
   });
 
   destroyChart('chart-iot-vib');
-  iotVibChart = new Chart(document.getElementById('chart-iot-vib'), {
+  iotVibChart = makeChart('chart-iot-vib', {
     type:'line',
     data:{ labels:[...iotLabels], datasets:[{ label:'mm/s', data:[...iotVibData], borderColor:'#ef4444', backgroundColor:'rgba(239,68,68,.1)', borderWidth:1.5, pointRadius:2, fill:true, tension:.4 }] },
     options:{ ...chartBase, animation:false, scales:{ x:{grid:gridStyle,ticks:axisTick}, y:{grid:gridStyle,ticks:axisTick,min:0,max:4} } }
@@ -1205,7 +1231,7 @@ async function loadUsers() {
     const data = await apiFetch('/api/users');
     tbody.innerHTML = data.data?.length
       ? data.data.map(u => {
-          const roles = (u.roles||[]).filter(Boolean);
+          const roles = (Array.isArray(u.roles) ? u.roles : (u.roles||'').replace(/^{|}$/g,'').split(',').filter(Boolean));
           const roleMap = {PROCUREMENT_OFFICER:'badge-blue',QUALITY_INSPECTOR:'badge-purple',SUPPLY_CHAIN_MANAGER:'badge-cyan',EQUIPMENT_ENGINEER:'badge-amber',AUDITOR:'badge-gray'};
           return `<tr>
             <td class="mono primary">${shortId(u.emp_id)}</td>
