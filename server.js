@@ -5,7 +5,7 @@
 // Stack:
 //   Express 4        — HTTP server & routing
 //   pg (node-postgres)— PostgreSQL client
-//   mongodb          —A MongoDB native driver
+//   mongodb          — MongoDB native driver
 //   jsonwebtoken     — JWT auth
 //   bcryptjs         — password hashing
 //   express-validator— request validation
@@ -1210,7 +1210,6 @@ app.post(
 app.get(
   "/api/audit-logs",
   authenticate,
-  authorize("AUDITOR", "SUPPLY_CHAIN_MANAGER"),
   async (req, res) => {
     try {
       const { emp_id, entity_type, entity_id, action_type, from, to, limit = 100, offset = 0 } = req.query;
@@ -1299,7 +1298,6 @@ app.get("/api/dashboard/supplier-kpis", authenticate,
 );
 
 app.get("/api/dashboard/shipment-status", authenticate,
-  authorize("SUPPLY_CHAIN_MANAGER", "PROCUREMENT_OFFICER"),
   async (req, res) => {
     try {
       const { rows } = await pgPool.query(
@@ -1354,7 +1352,6 @@ app.get("/api/dashboard/qc-insights", authenticate, async (req, res) => {
 });
 
 app.get("/api/dashboard/iot-anomalies", authenticate,
-  authorize("EQUIPMENT_ENGINEER", "SUPPLY_CHAIN_MANAGER"),
   async (req, res) => {
     try {
       const anomalies = await mongoDB
