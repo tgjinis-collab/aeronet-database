@@ -647,7 +647,7 @@ async function apiFetch(path, opts = {}) {
     throw new Error(`Server returned non-JSON response (${res.status})`);
   }
   const data = await res.json();
-  if (!res.ok && !data.success) throw new Error(data.message || `HTTP ${res.status}`);
+  // Don't throw on HTTP errors — return data and let callers check .success
   return data;
 }
 
@@ -668,6 +668,15 @@ async function checkAPIStatus() {
 setInterval(checkAPIStatus, 30000);
 
 // ── TOAST ─────────────────────────────────────────────────────────────────────
+// ── DEBUG: expose API errors clearly ────────────────────────────────────────
+window.onerror = (msg, src, line) => {
+  showToast(`JS Error: ${msg} (line ${line})`, 'error');
+  return false;
+};
+window.onunhandledrejection = (e) => {
+  showToast(`Unhandled: ${e.reason?.message || e.reason}`, 'error');
+};
+
 function showToast(msg, type = 'info') {
   const c = document.getElementById('toasts');
   const t = document.createElement('div');
@@ -833,18 +842,34 @@ function initApp() {
 // ── OVERVIEW ──────────────────────────────────────────────────────────────────
 async function loadOverview() {
   try {
-    const role = getUserRole();
-    // Fetch only what this role is allowed to see
-    const [summary, shipments, audit, qcInsights, kpis] = await Promise.all([
+    // Use allSettled so one failing endpoint never blocks the rest
+    const [summaryR, shipmentsR, auditR, qcR, kpisR, iotR] = await Promise.allSettled([
       apiFetch('/api/dashboard/summary'),
       apiFetch('/api/dashboard/shipment-status'),
       apiFetch('/api/audit-logs?limit=6'),
       apiFetch('/api/dashboard/qc-insights'),
       apiFetch('/api/dashboard/supplier-kpis'),
+      apiFetch('/api/dashboard/iot-anomalies'),
     ]);
 
+    const summary   = summaryR.status   === 'fulfilled' ? summaryR.value   : null;
+    const shipments = shipmentsR.status === 'fulfilled' ? shipmentsR.value : null;
+    const audit     = auditR.status     === 'fulfilled' ? auditR.value     : null;
+    const qcInsights= qcR.status        === 'fulfilled' ? qcR.value        : null;
+    const kpis      = kpisR.status      === 'fulfilled' ? kpisR.value      : null;
+    const iotData   = iotR.status       === 'fulfilled' ? iotR.value       : null;
+
+    // Show toast for each failed call
+    const callNames = ['Summary','Shipments','Audit Log','QC Insights','Supplier KPIs','IoT'];
+    [summaryR,shipmentsR,auditR,qcR,kpisR,iotR].forEach((r,i) => {
+      if (r.status === 'rejected') {
+        console.warn(`${callNames[i]} failed:`, r.reason?.message);
+        showToast(`${callNames[i]}: ${r.reason?.message || 'Failed to load'}`, 'error');
+      }
+    });
+
     // KPIs
-    if (summary.success) {
+    if (summary?.success) {
       const d = summary.data;
       document.getElementById('kpi-suppliers').textContent = d.active_suppliers ?? '—';
       document.getElementById('kpi-orders').textContent    = d.open_orders ?? '—';
@@ -855,13 +880,10 @@ async function loadOverview() {
     }
 
     // IoT anomalies KPI
-    try {
-      const iot = await apiFetch('/api/dashboard/iot-anomalies');
-      document.getElementById('kpi-anomalies').textContent = iot.count ?? 0;
-    } catch { document.getElementById('kpi-anomalies').textContent = '—'; }
+    document.getElementById('kpi-anomalies').textContent = iotData?.count ?? '—';
 
     // Shipments table
-    if (shipments.success) {
+    if (shipments?.success) {
       const tbody = document.getElementById('overview-shipments-tbody');
       tbody.innerHTML = shipments.data.length ? shipments.data.map(s => `
         <tr>
@@ -873,7 +895,7 @@ async function loadOverview() {
     }
 
     // Activity feed from audit log
-    if (audit.success) {
+    if (audit?.success) {
       const actionColors = {CREATE:'blue',UPDATE:'blue',APPROVE:'green',VIEW:'blue',LOGIN:'blue',LOGOUT:'blue',DELETE:'red'};
       document.getElementById('overview-activity').innerHTML = audit.data.length
         ? audit.data.map(a => `
@@ -889,7 +911,7 @@ async function loadOverview() {
     }
 
     // QC chart
-    if (qcInsights.success) {
+    if (qcInsights?.success) {
       const breakdown = qcInsights.data.breakdown || [];
       const types = [...new Set(breakdown.map(r => r.report_type))];
       const counts = types.map(t => breakdown.filter(r=>r.report_type===t).reduce((s,r)=>s+parseInt(r.count),0));
@@ -914,7 +936,7 @@ async function loadOverview() {
     }
 
     // Supplier delivery bars
-    if (kpis.success && kpis.data.length) {
+    if (kpis?.success && kpis.data?.length) {
       const bars = document.getElementById('supplier-delivery-bars');
       bars.innerHTML = kpis.data.map(s => {
         const total = parseInt(s.total_orders) || 0;
@@ -986,15 +1008,17 @@ async function loadSuppliers(accreditation = '') {
   const tbody = document.getElementById('suppliers-tbody');
   tbody.innerHTML = '<tr class="loading-row"><td colspan="7">LOADING...</td></tr>';
   try {
-    const [suppliers, kpis] = await Promise.all([
+    const [suppliersR, kpisR] = await Promise.allSettled([
       apiFetch(`/api/suppliers${accreditation ? '?accreditation='+accreditation : ''}`),
       apiFetch('/api/dashboard/supplier-kpis')
     ]);
+    const suppliers = suppliersR.status === 'fulfilled' ? suppliersR.value : {data:[]};
+    const kpis      = kpisR.status      === 'fulfilled' ? kpisR.value      : {success:false,data:[]};
 
     document.getElementById('suppliers-count').textContent = `${suppliers.data?.length || 0} suppliers`;
 
     // KPI bars
-    if (kpis.success && kpis.data.length) {
+    if (kpis?.success && kpis.data?.length) {
       const colors = ['var(--green)','var(--cyan)','var(--amber)','var(--red)'];
       document.getElementById('supplier-kpi-bars').innerHTML = kpis.data.map((s,i) => {
         const total = parseInt(s.total_orders)||0;
@@ -1304,10 +1328,12 @@ async function loadUsers() {
 async function loadAlerts() {
   const container = document.getElementById('alerts-container');
   try {
-    const [anomalies, orders] = await Promise.all([
+    const [anomaliesR, ordersR] = await Promise.allSettled([
       apiFetch('/api/dashboard/iot-anomalies'),
       apiFetch('/api/orders?status=DISPATCHED')
     ]);
+    const anomalies = anomaliesR.status === 'fulfilled' ? anomaliesR.value : {data:[]};
+    const orders    = ordersR.status    === 'fulfilled' ? ordersR.value    : {data:[]};
 
     const alerts = [];
     (anomalies.data||[]).forEach(a => {
