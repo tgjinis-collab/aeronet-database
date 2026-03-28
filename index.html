@@ -1574,6 +1574,109 @@ async function loadAlerts() {
 }
 
 function exportCSV(page) { showToast('Export — connect /api endpoints with CSV serialisation for production use.', 'info'); }
+
+// ── CREATE ORDER (Procurement Officer) ────────────────────────────────────────
+function showCreateOrder() {
+  const form = document.getElementById('create-order-form');
+  const btn  = document.getElementById('btn-create-order');
+  if (form) form.style.display = 'block';
+  if (btn)  btn.style.display  = 'none';
+  const today  = new Date().toISOString().split('T')[0];
+  const future = new Date(Date.now() + 30*24*60*60*1000).toISOString().split('T')[0];
+  const od = document.getElementById('co-order-date');
+  const dd = document.getElementById('co-delivery-date');
+  if (od) od.value = today;
+  if (dd) dd.value = future;
+}
+function hideCreateOrder() {
+  const form = document.getElementById('create-order-form');
+  const btn  = document.getElementById('btn-create-order');
+  const err  = document.getElementById('create-order-error');
+  if (form) form.style.display = 'none';
+  if (btn)  btn.style.display  = '';
+  if (err)  err.textContent    = '';
+}
+async function submitCreateOrder() {
+  const supplierId   = document.getElementById('co-supplier')?.value;
+  const orderDate    = document.getElementById('co-order-date')?.value;
+  const deliveryDate = document.getElementById('co-delivery-date')?.value;
+  const errEl        = document.getElementById('create-order-error');
+  if (errEl) errEl.textContent = '';
+  if (!supplierId)   { if(errEl) errEl.textContent = 'Please select a supplier.'; return; }
+  if (!orderDate)    { if(errEl) errEl.textContent = 'Please enter an order date.'; return; }
+  if (!deliveryDate) { if(errEl) errEl.textContent = 'Please enter a desired delivery date.'; return; }
+  try {
+    const res = await apiFetch('/api/orders', {
+      method: 'POST',
+      body: JSON.stringify({ supplier_id: supplierId, order_date: orderDate, desired_delivery_date: deliveryDate })
+    });
+    if (res.success) {
+      showToast('Purchase order created successfully.', 'success');
+      hideCreateOrder();
+      loadOrders();
+    } else {
+      if (errEl) errEl.textContent = res.message || 'Failed to create order.';
+    }
+  } catch (e) {
+    if (errEl) errEl.textContent = e.message;
+  }
+}
+
+// ── CREATE QC REPORT (Quality Inspector) ──────────────────────────────────────
+function showCreateQC() {
+  const form = document.getElementById('create-qc-form');
+  const btn  = document.getElementById('btn-create-qc');
+  if (form) form.style.display = 'block';
+  if (btn)  btn.style.display  = 'none';
+}
+function hideCreateQC() {
+  const form = document.getElementById('create-qc-form');
+  const btn  = document.getElementById('btn-create-qc');
+  const err  = document.getElementById('create-qc-error');
+  if (form) form.style.display = 'none';
+  if (btn)  btn.style.display  = '';
+  if (err)  err.textContent    = '';
+}
+async function submitCreateQC() {
+  const reportType      = document.getElementById('qc-type')?.value;
+  const deliveredItemId = document.getElementById('qc-item-id')?.value.trim();
+  const notes           = document.getElementById('qc-notes')?.value.trim();
+  const status          = document.getElementById('qc-status')?.value;
+  const errEl           = document.getElementById('create-qc-error');
+  if (errEl) errEl.textContent = '';
+  if (!deliveredItemId) { if(errEl) errEl.textContent = 'Delivered item ID is required.'; return; }
+  try {
+    const res = await apiFetch('/api/qc-reports', {
+      method: 'POST',
+      body: JSON.stringify({ delivered_item_id: deliveredItemId, report_type: reportType, current_status: status, notes })
+    });
+    if (res.success) {
+      showToast('QC report created successfully.', 'success');
+      hideCreateQC();
+      loadQC();
+    } else {
+      if (errEl) errEl.textContent = res.message || 'Failed to create QC report.';
+    }
+  } catch (e) {
+    if (errEl) errEl.textContent = e.message;
+  }
+}
+
+// ── FLAG NON-COMPLIANCE (Auditor) ─────────────────────────────────────────────
+async function submitFlag() {
+  const entityType = document.getElementById('flag-entity-type')?.value;
+  const entityId   = document.getElementById('flag-entity-id')?.value.trim();
+  const reason     = document.getElementById('flag-reason')?.value.trim();
+  const errEl      = document.getElementById('flag-error');
+  if (errEl) errEl.textContent = '';
+  if (!entityId) { if(errEl) errEl.textContent = 'Entity ID is required.'; return; }
+  if (!reason)   { if(errEl) errEl.textContent = 'Please provide a reason.'; return; }
+  showToast('Non-compliance flag recorded for ' + entityType + '.', 'warning');
+  if (document.getElementById('flag-entity-id')) document.getElementById('flag-entity-id').value = '';
+  if (document.getElementById('flag-reason'))    document.getElementById('flag-reason').value    = '';
+  if (errEl) errEl.textContent = '';
+}
+
 </script>
 </body>
 </html>
