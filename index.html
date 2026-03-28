@@ -205,7 +205,7 @@ td.mono{font-family:var(--font-mono);font-size:10px}
     <input class="login-input" id="login-email" type="email" placeholder="j.doe@aeronetb.com" value="j.smith@aeronetb.com"/>
     <label class="login-label">Password</label>
     <input class="login-input" id="login-password" type="password" placeholder="••••••••••" value="AeroNet2025"/>
-    <button class="login-btn" id="login-btn" onclick="doLogin()">Sign In →</button>
+    <button class="login-btn" id="login-btn" data-action="doLogin()">Sign In →</button>
     <div class="login-error" id="login-error"></div>
     <div class="login-hint">
       Default password: <strong style="color:var(--cyan)">AeroNet2025</strong><br>
@@ -231,36 +231,36 @@ td.mono{font-family:var(--font-mono);font-size:10px}
       <span style="color:var(--line2)">|</span>
       <span class="role-badge" id="role-display">...</span>
       <span id="user-name" style="font-size:11px;color:var(--text2)"></span>
-      <button class="logout-btn" onclick="doLogout()">Sign Out</button>
+      <button class="logout-btn" data-action="doLogout()">Sign Out</button>
     </div>
   </header>
 
   <aside class="sidebar">
     <div class="nav-section">
       <div class="nav-label">Overview</div>
-      <div class="nav-item active" data-page="overview" onclick="nav(this)"><span class="nav-icon">◼</span> Dashboard</div>
-      <div class="nav-item" data-page="alerts" onclick="nav(this)"><span class="nav-icon">🔔</span> Alerts<span class="nav-badge" id="alert-count">0</span></div>
+      <div class="nav-item active" data-page="overview" data-action="nav(this)"><span class="nav-icon">◼</span> Dashboard</div>
+      <div class="nav-item" data-page="alerts" data-action="nav(this)"><span class="nav-icon">🔔</span> Alerts<span class="nav-badge" id="alert-count">0</span></div>
     </div>
     <div class="nav-section">
       <div class="nav-label">Operations</div>
-      <div class="nav-item" data-page="shipments" onclick="nav(this)"><span class="nav-icon">🚢</span> Shipments</div>
-      <div class="nav-item" data-page="orders" onclick="nav(this)"><span class="nav-icon">📋</span> Orders</div>
-      <div class="nav-item" data-page="suppliers" onclick="nav(this)"><span class="nav-icon">🏭</span> Suppliers</div>
+      <div class="nav-item" data-page="shipments" data-action="nav(this)"><span class="nav-icon">🚢</span> Shipments</div>
+      <div class="nav-item" data-page="orders" data-action="nav(this)"><span class="nav-icon">📋</span> Orders</div>
+      <div class="nav-item" data-page="suppliers" data-action="nav(this)"><span class="nav-icon">🏭</span> Suppliers</div>
     </div>
     <div class="nav-section">
       <div class="nav-label">Quality</div>
-      <div class="nav-item" data-page="qc" onclick="nav(this)"><span class="nav-icon">🔬</span> QC Reports</div>
-      <div class="nav-item" data-page="certifications" onclick="nav(this)"><span class="nav-icon">🔒</span> Certifications</div>
+      <div class="nav-item" data-page="qc" data-action="nav(this)"><span class="nav-icon">🔬</span> QC Reports</div>
+      <div class="nav-item" data-page="certifications" data-action="nav(this)"><span class="nav-icon">🔒</span> Certifications</div>
     </div>
     <div class="nav-section">
       <div class="nav-label">Equipment</div>
-      <div class="nav-item" data-page="iot" onclick="nav(this)"><span class="nav-icon">📡</span> IoT Monitor</div>
-      <div class="nav-item" data-page="equipment" onclick="nav(this)"><span class="nav-icon">⚙️</span> Equipment</div>
+      <div class="nav-item" data-page="iot" data-action="nav(this)"><span class="nav-icon">📡</span> IoT Monitor</div>
+      <div class="nav-item" data-page="equipment" data-action="nav(this)"><span class="nav-icon">⚙️</span> Equipment</div>
     </div>
     <div class="nav-section">
       <div class="nav-label">Admin</div>
-      <div class="nav-item" data-page="audit" onclick="nav(this)"><span class="nav-icon">📜</span> Audit Log</div>
-      <div class="nav-item" data-page="users" onclick="nav(this)"><span class="nav-icon">👥</span> Users</div>
+      <div class="nav-item" data-page="audit" data-action="nav(this)"><span class="nav-icon">📜</span> Audit Log</div>
+      <div class="nav-item" data-page="users" data-action="nav(this)"><span class="nav-icon">👥</span> Users</div>
     </div>
   </aside>
 
@@ -271,8 +271,8 @@ td.mono{font-family:var(--font-mono);font-size:10px}
       <div class="page-header">
         <div><div class="page-title">Operations Overview</div><div class="page-sub">Real-time supply chain visibility</div></div>
         <div class="header-actions">
-          <button class="btn btn-ghost btn-sm" onclick="exportCSV('overview')">⬇ Export</button>
-          <button class="btn btn-primary btn-sm" onclick="loadOverview()">↺ Refresh</button>
+          <button class="btn btn-ghost btn-sm" data-action="exportCSV('overview')">⬇ Export</button>
+          <button class="btn btn-primary btn-sm" data-action="loadOverview()">↺ Refresh</button>
         </div>
       </div>
       <div class="kpi-grid" id="kpi-grid">
@@ -323,7 +323,7 @@ td.mono{font-family:var(--font-mono);font-size:10px}
     <div class="page" id="page-shipments">
       <div class="page-header">
         <div><div class="page-title">Shipment Tracking</div><div class="page-sub">Global logistics visibility</div></div>
-        <div class="header-actions"><button class="btn btn-primary btn-sm" onclick="loadShipments()">↺ Refresh</button></div>
+        <div class="header-actions"><button class="btn btn-primary btn-sm" data-action="loadShipments()">↺ Refresh</button></div>
       </div>
       <div class="search-bar">
         <input class="search-input" placeholder="Search by tracking number, carrier..." oninput="filterTable(this,'shipments-tbody')"/>
@@ -340,15 +340,15 @@ td.mono{font-family:var(--font-mono);font-size:10px}
       <div class="page-header">
         <div><div class="page-title">Purchase Orders</div><div class="page-sub">Procurement lifecycle</div></div>
         <div class="header-actions">
-          <button class="btn btn-primary btn-sm" id="btn-create-order" onclick="showCreateOrder()" style="display:none">+ Create Order</button>
-          <button class="btn btn-ghost btn-sm" onclick="loadOrders()">↺ Refresh</button>
+          <button class="btn btn-primary btn-sm" id="btn-create-order" data-action="showCreateOrder()" style="display:none">+ Create Order</button>
+          <button class="btn btn-ghost btn-sm" data-action="loadOrders()">↺ Refresh</button>
         </div>
       </div>
       <!-- Create Order Form (Procurement Officer only) -->
       <div id="create-order-form" style="display:none" class="panel panel-accent mb-4">
         <div class="panel-head">
           <div class="panel-title">+ New Purchase Order</div>
-          <button class="btn btn-ghost btn-sm" onclick="hideCreateOrder()">✕ Cancel</button>
+          <button class="btn btn-ghost btn-sm" data-action="hideCreateOrder()">✕ Cancel</button>
         </div>
         <div class="panel-body">
           <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">
@@ -372,7 +372,7 @@ td.mono{font-family:var(--font-mono);font-size:10px}
             </div>
           </div>
           <div id="create-order-error" style="color:var(--red);font-size:10px;margin-bottom:8px;min-height:14px"></div>
-          <button class="btn btn-primary" onclick="submitCreateOrder()">Submit Order</button>
+          <button class="btn btn-primary" data-action="submitCreateOrder()">Submit Order</button>
         </div>
       </div>
       <div class="search-bar">
@@ -389,7 +389,7 @@ td.mono{font-family:var(--font-mono);font-size:10px}
     <div class="page" id="page-suppliers">
       <div class="page-header">
         <div><div class="page-title">Supplier Performance</div><div class="page-sub">KPIs · Scorecards · Analytics</div></div>
-        <div class="header-actions"><button class="btn btn-primary btn-sm" onclick="loadSuppliers()">↺ Refresh</button></div>
+        <div class="header-actions"><button class="btn btn-primary btn-sm" data-action="loadSuppliers()">↺ Refresh</button></div>
       </div>
       <div class="search-bar">
         <input class="search-input" placeholder="Search suppliers..." oninput="filterTable(this,'suppliers-tbody')"/>
@@ -416,15 +416,15 @@ td.mono{font-family:var(--font-mono);font-size:10px}
       <div class="page-header">
         <div><div class="page-title">QC Reports</div><div class="page-sub">Inspection results · Entry forms · Version history</div></div>
         <div class="header-actions">
-          <button class="btn btn-primary btn-sm" id="btn-create-qc" onclick="showCreateQC()" style="display:none">+ New Report</button>
-          <button class="btn btn-ghost btn-sm" onclick="loadQC()">↺ Refresh</button>
+          <button class="btn btn-primary btn-sm" id="btn-create-qc" data-action="showCreateQC()" style="display:none">+ New Report</button>
+          <button class="btn btn-ghost btn-sm" data-action="loadQC()">↺ Refresh</button>
         </div>
       </div>
       <!-- QC Report Entry Form (Quality Inspector only) -->
       <div id="create-qc-form" style="display:none" class="panel panel-accent mb-4">
         <div class="panel-head">
           <div class="panel-title">+ New QC Inspection Report</div>
-          <button class="btn btn-ghost btn-sm" onclick="hideCreateQC()">✕ Cancel</button>
+          <button class="btn btn-ghost btn-sm" data-action="hideCreateQC()">✕ Cancel</button>
         </div>
         <div class="panel-body">
           <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
@@ -454,7 +454,7 @@ td.mono{font-family:var(--font-mono);font-size:10px}
             </select>
           </div>
           <div id="create-qc-error" style="color:var(--red);font-size:10px;margin-bottom:8px;min-height:14px"></div>
-          <button class="btn btn-primary" onclick="submitCreateQC()">Submit QC Report</button>
+          <button class="btn btn-primary" data-action="submitCreateQC()">Submit QC Report</button>
         </div>
       </div>
       <div class="search-bar">
@@ -486,7 +486,7 @@ td.mono{font-family:var(--font-mono);font-size:10px}
     <div class="page" id="page-certifications">
       <div class="page-header">
         <div><div class="page-title">Certifications</div><div class="page-sub">Immutable records · Inspector approvals · Version history</div></div>
-        <div class="header-actions"><button class="btn btn-primary btn-sm" onclick="loadCertifications()">↺ Refresh</button></div>
+        <div class="header-actions"><button class="btn btn-primary btn-sm" data-action="loadCertifications()">↺ Refresh</button></div>
       </div>
       <div class="alert-strip info">🔒 Certifications are immutable once approved — no modifications permitted after locking.</div>
       <div id="auditor-flag-panel" style="display:none;margin-bottom:16px">
@@ -515,7 +515,7 @@ td.mono{font-family:var(--font-mono);font-size:10px}
               <textarea id="flag-reason" rows="2" class="search-input" placeholder="Describe the non-compliance issue..." style="width:100%;resize:vertical;margin-bottom:0"></textarea>
             </div>
             <div id="flag-error" style="color:var(--red);font-size:10px;margin-bottom:8px;min-height:14px"></div>
-            <button class="btn btn-sm" style="background:var(--red);color:#fff;border:none" onclick="submitFlag()">⚑ Submit Flag</button>
+            <button class="btn btn-sm" style="background:var(--red);color:#fff;border:none" data-action="submitFlag()">⚑ Submit Flag</button>
           </div>
         </div>
       </div>
@@ -541,8 +541,8 @@ td.mono{font-family:var(--font-mono);font-size:10px}
       <div class="page-header">
         <div><div class="page-title">IoT Monitor</div><div class="page-sub">Live sensor feeds · Anomaly detection</div></div>
         <div class="header-actions">
-          <button class="btn btn-ghost btn-sm" id="iot-pause-btn" onclick="toggleIoT(this)">⏸ Pause Feed</button>
-          <button class="btn btn-primary btn-sm" onclick="loadIoTAnomalies()">↺ Refresh</button>
+          <button class="btn btn-ghost btn-sm" id="iot-pause-btn" data-action="toggleIoT(this)">⏸ Pause Feed</button>
+          <button class="btn btn-primary btn-sm" data-action="loadIoTAnomalies()">↺ Refresh</button>
         </div>
       </div>
       <div class="gauge-grid" id="iot-gauges">
@@ -571,7 +571,7 @@ td.mono{font-family:var(--font-mono);font-size:10px}
     <div class="page" id="page-equipment">
       <div class="page-header">
         <div><div class="page-title">Equipment Registry</div><div class="page-sub">Manufacturing assets · IoT assignments</div></div>
-        <div class="header-actions"><button class="btn btn-primary btn-sm" onclick="loadEquipment()">↺ Refresh</button></div>
+        <div class="header-actions"><button class="btn btn-primary btn-sm" data-action="loadEquipment()">↺ Refresh</button></div>
       </div>
       <div class="panel">
         <div class="panel-head"><div class="panel-title">All Equipment</div><span class="badge badge-blue" id="equipment-count">0 items</span></div>
@@ -583,7 +583,7 @@ td.mono{font-family:var(--font-mono);font-size:10px}
     <div class="page" id="page-audit">
       <div class="page-header">
         <div><div class="page-title">Audit Log</div><div class="page-sub">Complete action trail · Compliance</div></div>
-        <div class="header-actions"><button class="btn btn-primary btn-sm" onclick="loadAudit()">↺ Refresh</button></div>
+        <div class="header-actions"><button class="btn btn-primary btn-sm" data-action="loadAudit()">↺ Refresh</button></div>
       </div>
       <div class="search-bar">
         <input class="search-input" placeholder="Search audit log..." oninput="filterTable(this,'audit-tbody')"/>
@@ -598,7 +598,7 @@ td.mono{font-family:var(--font-mono);font-size:10px}
     <div class="page" id="page-users">
       <div class="page-header">
         <div><div class="page-title">Users</div><div class="page-sub">Roles · Access control</div></div>
-        <div class="header-actions"><button class="btn btn-primary btn-sm" onclick="loadUsers()">↺ Refresh</button></div>
+        <div class="header-actions"><button class="btn btn-primary btn-sm" data-action="loadUsers()">↺ Refresh</button></div>
       </div>
       <div class="panel">
         <div class="tbl-wrap"><table><thead><tr><th>Emp ID</th><th>Name</th><th>Role(s)</th><th>Access Level</th><th>Department</th><th>Email</th><th>Status</th></tr></thead><tbody id="users-tbody"><tr class="loading-row"><td colspan="6">LOADING...</td></tr></tbody></table></div>
@@ -804,7 +804,7 @@ function showToast(msg, type = 'info') {
   const c = document.getElementById('toasts');
   const t = document.createElement('div');
   t.className = `toast ${type}`;
-  t.innerHTML = `<div class="toast-msg">${msg}</div><span class="toast-close" onclick="this.parentNode.remove()">✕</span>`;
+  t.innerHTML = `<div class="toast-msg">${msg}</div><span class="toast-close" data-action="this.parentNode.remove()">✕</span>`;
   c.appendChild(t);
   setTimeout(() => t?.remove(), 5000);
 }
@@ -1086,7 +1086,7 @@ async function loadOverview() {
         const completed = parseInt(s.completed_orders) || 0;
         const rate = total ? Math.round((completed/total)*100) : 0;
         const color = rate>=90?'var(--green)':rate>=70?'var(--cyan)':rate>=50?'var(--amber)':'var(--red)';
-        return `<div class="meter-row" style="cursor:pointer" onclick="drillDown('suppliers')" title="Drill down to Suppliers">
+        return `<div class="meter-row" style="cursor:pointer" data-action="drillDown('suppliers')" title="Drill down to Suppliers">
           <div class="meter-label">${s.business_name}</div>
           <div class="meter-bar-wrap"><div class="meter-bar" style="width:${rate}%;background:${color}"></div></div>
           <div class="meter-val" style="color:${color}">${rate}%</div>
@@ -1168,7 +1168,7 @@ async function loadSuppliers(accreditation = '') {
         const comp  = parseInt(s.completed_orders)||0;
         const rate  = total ? Math.round((comp/total)*100) : 0;
         const color = rate>=90?'var(--green)':rate>=70?'var(--cyan)':rate>=50?'var(--amber)':'var(--red)';
-        return `<div class="meter-row" style="cursor:pointer" onclick="drillDown('suppliers')" title="Drill down to Suppliers">
+        return `<div class="meter-row" style="cursor:pointer" data-action="drillDown('suppliers')" title="Drill down to Suppliers">
           <div class="meter-label">${s.business_name}</div>
           <div class="meter-bar-wrap"><div class="meter-bar" style="width:${rate}%;background:${color}"></div></div>
           <div class="meter-val" style="color:${color}">${rate}%</div>
@@ -1242,7 +1242,7 @@ async function loadQC(delivered_item_id = '', report_type = '', status = '') {
     });
 
     tbody.innerHTML = reports.length
-      ? reports.map(r => `<tr style="cursor:pointer" onclick="drillDown('certifications')">
+      ? reports.map(r => `<tr style="cursor:pointer" data-action="drillDown('certifications')">
           <td class="mono primary">${shortId(r.qc_report_id)}</td>
           <td class="mono text-muted">${shortId(r.delivered_item_id)}</td>
           <td><span class="badge badge-blue">${r.report_type?.replace(/_/g,' ')}</span></td>
@@ -1325,7 +1325,7 @@ async function loadCertifications() {
           <div class="panel-body">
             <div class="alert-strip info">ℹ Once is_immutable = TRUE, records cannot be modified. Click any row to view its version history.</div>
             ${reports.slice(0,15).map(r => `
-              <div class="cert-row" style="cursor:pointer" onclick="showVersionHistory('${r.qc_report_id}','${r.mongo_doc_ref||''}')">
+              <div class="cert-row" style="cursor:pointer" data-action="showVersionHistory('${r.qc_report_id}','${r.mongo_doc_ref||''}')">
                 <div style="font-size:16px">${r.current_status==='APPROVED'?'🔒':'📄'}</div>
                 <div class="cert-info">
                   <div class="cert-id">${shortId(r.qc_report_id)} — ${(r.report_type||'').replace(/_/g,' ')}</div>
@@ -1677,6 +1677,58 @@ async function submitFlag() {
   if (errEl) errEl.textContent = '';
 }
 
+
+// ── SAFE EVENT BINDING (replaces all onclick attributes) ─────────────────────
+document.addEventListener('DOMContentLoaded', function() {
+  document.body.addEventListener('click', function(e) {
+    var el = e.target.closest('[data-action]');
+    if (!el) return;
+    var action = el.getAttribute('data-action');
+    if (!action) return;
+    try {
+      // Extract function name and args
+      var match = action.match(/^(\w+)\((.*)\)$/);
+      if (!match) return;
+      var fnName = match[1];
+      var argsStr = match[2].trim();
+      var fn = window[fnName];
+      if (typeof fn !== 'function') {
+        console.error('Action not found:', fnName);
+        return;
+      }
+      if (!argsStr) {
+        fn();
+      } else {
+        // Parse simple string/bool args
+        var args = argsStr.split(',').map(function(a) {
+          a = a.trim();
+          if (a === 'true') return true;
+          if (a === 'false') return false;
+          if ((a[0] === "'" && a[a.length-1] === "'") || (a[0] === '"' && a[a.length-1] === '"')) return a.slice(1,-1);
+          return a;
+        });
+        fn.apply(null, args);
+      }
+    } catch(err) {
+      console.error('Action error:', action, err);
+    }
+  });
+});
+
+// Expose all functions to window scope for data-action binding
+window.doLogin=doLogin; window.doLogout=doLogout; window.nav=nav;
+window.loadOverview=loadOverview; window.loadShipments=loadShipments;
+window.loadOrders=loadOrders; window.loadSuppliers=loadSuppliers;
+window.loadQC=loadQC; window.loadCertifications=loadCertifications;
+window.loadIoT=loadIoT; window.loadIoTAnomalies=loadIoTAnomalies;
+window.loadEquipment=loadEquipment; window.loadAudit=loadAudit;
+window.loadUsers=loadUsers; window.loadAlerts=loadAlerts;
+window.toggleIoT=toggleIoT; window.filterTable=filterTable;
+window.exportCSV=exportCSV; window.drillDown=drillDown;
+window.showVersionHistory=showVersionHistory;
+window.showCreateOrder=showCreateOrder; window.hideCreateOrder=hideCreateOrder; window.submitCreateOrder=submitCreateOrder;
+window.showCreateQC=showCreateQC; window.hideCreateQC=hideCreateQC; window.submitCreateQC=submitCreateQC;
+window.submitFlag=submitFlag;
 </script>
 </body>
 </html>
