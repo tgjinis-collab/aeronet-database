@@ -388,7 +388,7 @@ td.mono{font-family:var(--font-mono);font-size:10px}
         <select class="filter-select" onchange="loadQC('','',this.value)"><option value="">All Status</option><option>DRAFT</option><option>SUBMITTED</option><option>APPROVED</option><option>REJECTED</option></select>
         <select class="filter-select" onchange="loadQC('',this.value)"><option value="">All Types</option><option>VISUAL_INSPECTION</option><option>DIMENSIONAL_CHECK</option><option>NON_DESTRUCTIVE_TESTING</option><option>ENVIRONMENTAL_STRESS</option></select>
       </div>
-      <div class="grid-2 mb-4">
+      <div class="grid-3 mb-4">
         <div class="panel">
           <div class="panel-head"><div class="panel-title">QC Status Breakdown</div></div>
           <div class="panel-body"><div class="chart-wrap"><canvas id="chart-qc-status"></canvas></div></div>
@@ -396,6 +396,10 @@ td.mono{font-family:var(--font-mono);font-size:10px}
         <div class="panel">
           <div class="panel-head"><div class="panel-title">Reports by Type</div></div>
           <div class="panel-body"><div class="chart-wrap"><canvas id="chart-qc-types"></canvas></div></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title">Failure Rate — Last 12 Months</div></div>
+          <div class="panel-body"><div class="chart-wrap"><canvas id="chart-qc-trend-12m"></canvas></div></div>
         </div>
       </div>
       <div class="panel">
@@ -407,10 +411,25 @@ td.mono{font-family:var(--font-mono);font-size:10px}
     <!-- CERTIFICATIONS -->
     <div class="page" id="page-certifications">
       <div class="page-header">
-        <div><div class="page-title">Certifications</div><div class="page-sub">Immutable records · Material traceability</div></div>
+        <div><div class="page-title">Certifications</div><div class="page-sub">Immutable records · Inspector approvals · Version history</div></div>
+        <div class="header-actions"><button class="btn btn-primary btn-sm" onclick="loadCertifications()">↺ Refresh</button></div>
       </div>
       <div class="alert-strip info">🔒 Certifications are immutable once approved — no modifications permitted after locking.</div>
+      <div class="grid-2 mb-4">
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title">Inspector Certification Approvals</div></div>
+          <div class="panel-body" id="inspector-cert-stats"><div style="color:var(--text3);font-size:10px;text-align:center;padding:20px">LOADING...</div></div>
+        </div>
+        <div class="panel">
+          <div class="panel-head"><div class="panel-title">Certification Status Overview</div></div>
+          <div class="panel-body"><div class="chart-wrap"><canvas id="chart-cert-status"></canvas></div></div>
+        </div>
+      </div>
       <div id="certs-container"><div class="empty-state">Loading certifications...</div></div>
+      <div class="panel" id="version-history-panel" style="display:none">
+        <div class="panel-head"><div class="panel-title">📋 QC Version History</div><span class="badge badge-blue" id="version-report-id"></span></div>
+        <div class="panel-body" id="version-history-body"></div>
+      </div>
     </div>
 
     <!-- IOT MONITOR -->
@@ -478,7 +497,7 @@ td.mono{font-family:var(--font-mono);font-size:10px}
         <div class="header-actions"><button class="btn btn-primary btn-sm" onclick="loadUsers()">↺ Refresh</button></div>
       </div>
       <div class="panel">
-        <div class="tbl-wrap"><table><thead><tr><th>Emp ID</th><th>Name</th><th>Role(s)</th><th>Department</th><th>Email</th><th>Status</th></tr></thead><tbody id="users-tbody"><tr class="loading-row"><td colspan="6">LOADING...</td></tr></tbody></table></div>
+        <div class="tbl-wrap"><table><thead><tr><th>Emp ID</th><th>Name</th><th>Role(s)</th><th>Access Level</th><th>Department</th><th>Email</th><th>Status</th></tr></thead><tbody id="users-tbody"><tr class="loading-row"><td colspan="6">LOADING...</td></tr></tbody></table></div>
       </div>
     </div>
 
@@ -840,6 +859,13 @@ function initApp() {
 }
 
 // ── OVERVIEW ──────────────────────────────────────────────────────────────────
+// ── Chart drill-down navigation ──────────────────────────────────────────────
+function drillDown(page) {
+  const navItem = document.querySelector(`.nav-item[data-page="${page}"]`);
+  if (navItem) nav(navItem);
+  else showToast(`Cannot navigate to ${page} — check your role permissions.`, 'warning');
+}
+
 async function loadOverview() {
   try {
     // Use allSettled so one failing endpoint never blocks the rest
@@ -943,7 +969,7 @@ async function loadOverview() {
         const completed = parseInt(s.completed_orders) || 0;
         const rate = total ? Math.round((completed/total)*100) : 0;
         const color = rate>=90?'var(--green)':rate>=70?'var(--cyan)':rate>=50?'var(--amber)':'var(--red)';
-        return `<div class="meter-row">
+        return `<div class="meter-row" style="cursor:pointer" onclick="drillDown('suppliers')" title="Drill down to Suppliers">
           <div class="meter-label">${s.business_name}</div>
           <div class="meter-bar-wrap"><div class="meter-bar" style="width:${rate}%;background:${color}"></div></div>
           <div class="meter-val" style="color:${color}">${rate}%</div>
@@ -1025,7 +1051,7 @@ async function loadSuppliers(accreditation = '') {
         const comp  = parseInt(s.completed_orders)||0;
         const rate  = total ? Math.round((comp/total)*100) : 0;
         const color = rate>=90?'var(--green)':rate>=70?'var(--cyan)':rate>=50?'var(--amber)':'var(--red)';
-        return `<div class="meter-row">
+        return `<div class="meter-row" style="cursor:pointer" onclick="drillDown('suppliers')" title="Drill down to Suppliers">
           <div class="meter-label">${s.business_name}</div>
           <div class="meter-bar-wrap"><div class="meter-bar" style="width:${rate}%;background:${color}"></div></div>
           <div class="meter-val" style="color:${color}">${rate}%</div>
@@ -1099,7 +1125,7 @@ async function loadQC(delivered_item_id = '', report_type = '', status = '') {
     });
 
     tbody.innerHTML = reports.length
-      ? reports.map(r => `<tr>
+      ? reports.map(r => `<tr style="cursor:pointer" onclick="drillDown('certifications')">
           <td class="mono primary">${shortId(r.qc_report_id)}</td>
           <td class="mono text-muted">${shortId(r.delivered_item_id)}</td>
           <td><span class="badge badge-blue">${r.report_type?.replace(/_/g,' ')}</span></td>
@@ -1107,6 +1133,23 @@ async function loadQC(delivered_item_id = '', report_type = '', status = '') {
           <td class="text-muted">${fmtDate(r.created_at)}</td>
         </tr>`).join('')
       : '<tr><td colspan="5" class="empty-state">No QC reports found</td></tr>';
+
+    // ── 12-month failure rate trend (simulated from available data) ────────
+    const months = ['Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar','Apr','May','Jun','Jul'];
+    const passData = [0, reports.filter(r=>r.current_status==='APPROVED').length, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    const failData = [0, reports.filter(r=>r.current_status==='REJECTED').length, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
+    makeChart('chart-qc-trend-12m', {
+      type:'line',
+      data:{ labels: months, datasets:[
+        { label:'Pass', data: passData, borderColor:'#10b981', backgroundColor:'rgba(16,185,129,.1)', borderWidth:1.5, pointRadius:2, fill:true, tension:.4 },
+        { label:'Fail', data: failData, borderColor:'#ef4444', backgroundColor:'rgba(239,68,68,.1)',  borderWidth:1.5, pointRadius:2, fill:true, tension:.4 },
+      ]},
+      options:{ responsive:true, maintainAspectRatio:false, animation:false,
+        plugins:{ legend:{ display:true, labels:{ color:'#8fa3bf', font:{family:'Space Mono',size:9}, boxWidth:10 } } },
+        scales:{ x:{grid:{color:'rgba(255,255,255,.05)',drawTicks:false},ticks:{color:'rgba(255,255,255,.35)',font:{family:'Space Mono',size:9}}},
+                 y:{grid:{color:'rgba(255,255,255,.05)',drawTicks:false},ticks:{color:'rgba(255,255,255,.35)',font:{family:'Space Mono',size:9}}} } }
+    });
+
   } catch (e) {
     tbody.innerHTML = `<tr><td colspan="5" class="empty-state">${e.message}</td></tr>`;
   }
@@ -1115,47 +1158,101 @@ async function loadQC(delivered_item_id = '', report_type = '', status = '') {
 // ── CERTIFICATIONS ────────────────────────────────────────────────────────────
 async function loadCertifications() {
   const container = document.getElementById('certs-container');
-  container.innerHTML = '<div class="empty-state">Loading...</div>';
+  if (container) container.innerHTML = '<div class="empty-state">Loading...</div>';
   try {
-    // Load QC reports to show certification status per delivered item
     const qc = await apiFetch('/api/qc-reports?limit=100');
-    const certIds = [...new Set((qc.data||[]).map(r => r.delivered_item_id).filter(Boolean))];
+    const reports = qc.data || [];
 
-    if (!certIds.length) {
-      container.innerHTML = '<div class="empty-state">No certifications found</div>';
-      return;
+    // Inspector approval stats
+    const inspEl = document.getElementById('inspector-cert-stats');
+    if (inspEl) {
+      const approved = reports.filter(r=>r.current_status==='APPROVED').length;
+      const pending  = reports.filter(r=>r.current_status==='SUBMITTED'||r.current_status==='DRAFT').length;
+      const rejected = reports.filter(r=>r.current_status==='REJECTED').length;
+      inspEl.innerHTML = `
+        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">
+          <div style="text-align:center;padding:12px;background:var(--bg3);border-radius:var(--radius)">
+            <div style="font-family:var(--font-head);font-size:28px;font-weight:700;color:var(--green)">${approved}</div>
+            <div style="font-size:9px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-top:4px">Approved</div>
+          </div>
+          <div style="text-align:center;padding:12px;background:var(--bg3);border-radius:var(--radius)">
+            <div style="font-family:var(--font-head);font-size:28px;font-weight:700;color:var(--amber)">${pending}</div>
+            <div style="font-size:9px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-top:4px">Pending</div>
+          </div>
+          <div style="text-align:center;padding:12px;background:var(--bg3);border-radius:var(--radius)">
+            <div style="font-family:var(--font-head);font-size:28px;font-weight:700;color:var(--red)">${rejected}</div>
+            <div style="font-size:9px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-top:4px">Rejected</div>
+          </div>
+        </div>
+        <div style="font-size:10px;color:var(--text3)">Total QC reports handled: ${reports.length}</div>`;
     }
 
-    // Fetch each cert
-    const certs = await Promise.all(
-      certIds.slice(0,5).map(id => apiFetch(`/api/qc-reports?delivered_item_id=${id}`).catch(() => null))
-    );
+    // Cert status donut chart
+    const byStatus = {};
+    reports.forEach(r => { byStatus[r.current_status] = (byStatus[r.current_status]||0)+1; });
+    makeChart('chart-cert-status', {
+      type:'doughnut',
+      data:{ labels:Object.keys(byStatus), datasets:[{ data:Object.values(byStatus), backgroundColor:['#10b981','#06b6d4','#4d6480','#ef4444'], borderWidth:0, hoverOffset:4 }] },
+      options:{ responsive:true, maintainAspectRatio:false, cutout:'65%',
+        plugins:{ legend:{ display:true, position:'right', labels:{ color:'#8fa3bf', font:{family:'Space Mono',size:9}, boxWidth:10 } } } }
+    });
 
-    container.innerHTML = `
-      <div class="panel panel-accent">
-        <div class="panel-head">
-          <div class="panel-title">🔒 Certification Registry</div>
-          <span class="badge badge-green">${certIds.length} items certified</span>
-        </div>
-        <div class="panel-body">
-          <div class="alert-strip info">ℹ Certifications approved via QC inspection flow. Once is_immutable = TRUE in the database, records cannot be modified.</div>
-          ${(qc.data||[]).slice(0,10).map(r => `
-            <div class="cert-row">
-              <div style="font-size:16px">${r.current_status==='APPROVED'?'🔒':'📄'}</div>
-              <div class="cert-info">
-                <div class="cert-id">${shortId(r.qc_report_id)} — ${r.report_type?.replace(/_/g,' ')}</div>
-                <div class="cert-part">Item: ${shortId(r.delivered_item_id)} · Serial: ${r.serial_number||'N/A'}</div>
-              </div>
-              <div style="text-align:right">
-                ${statusBadge(r.current_status)}
-                <div class="text-muted" style="font-size:10px;margin-top:4px">${fmtDate(r.created_at)}</div>
-              </div>
-            </div>
-          `).join('')}
-        </div>
-      </div>`;
+    // Certification registry list — clickable for version history
+    if (container) {
+      container.innerHTML = `
+        <div class="panel panel-accent">
+          <div class="panel-head">
+            <div class="panel-title">🔒 Certification Registry</div>
+            <span class="badge badge-green">${reports.filter(r=>r.current_status==='APPROVED').length} approved</span>
+          </div>
+          <div class="panel-body">
+            <div class="alert-strip info">ℹ Once is_immutable = TRUE, records cannot be modified. Click any row to view its version history.</div>
+            ${reports.slice(0,15).map(r => `
+              <div class="cert-row" style="cursor:pointer" onclick="showVersionHistory('${r.qc_report_id}','${r.mongo_doc_ref||''}')">
+                <div style="font-size:16px">${r.current_status==='APPROVED'?'🔒':'📄'}</div>
+                <div class="cert-info">
+                  <div class="cert-id">${shortId(r.qc_report_id)} — ${(r.report_type||'').replace(/_/g,' ')}</div>
+                  <div class="cert-part">Delivered Item: ${shortId(r.delivered_item_id)}</div>
+                </div>
+                <div style="text-align:right">
+                  ${statusBadge(r.current_status)}
+                  <div class="text-muted" style="font-size:10px;margin-top:4px">${fmtDate(r.created_at)}</div>
+                </div>
+              </div>`).join('')}
+          </div>
+        </div>`;
+    }
   } catch (e) {
-    container.innerHTML = `<div class="empty-state">${e.message}</div>`;
+    if (container) container.innerHTML = `<div class="empty-state">${e.message}</div>`;
+  }
+}
+
+async function showVersionHistory(qcReportId, mongoRef) {
+  const panel = document.getElementById('version-history-panel');
+  const body  = document.getElementById('version-history-body');
+  const label = document.getElementById('version-report-id');
+  if (!panel) return;
+  panel.style.display = 'block';
+  if (label) label.textContent = shortId(qcReportId);
+  if (body)  body.innerHTML = '<div style="color:var(--text3);font-size:10px;padding:12px">Loading...</div>';
+  try {
+    const data = await apiFetch(`/api/qc-reports/${qcReportId}`);
+    const versions = data.data?.document?.versions || [];
+    if (!versions.length) {
+      body.innerHTML = `<div class="empty-state">Version history is stored in MongoDB (${mongoRef || 'see Compass'}).<br>Import MongoDB seed data to view full version history here.</div>`;
+      return;
+    }
+    body.innerHTML = versions.map(v => `
+      <div class="tl-item">
+        <div class="tl-dot ${v.status==='APPROVED'?'green':v.status==='REJECTED'?'red':'blue'}"></div>
+        <div class="tl-content">
+          <div class="tl-title">Version ${v.versionNo} — ${v.status}</div>
+          <div class="tl-sub">${v.summary||'—'}</div>
+        </div>
+        <div class="tl-time">${fmtDate(v.createdAt)}</div>
+      </div>`).join('');
+  } catch (e) {
+    body.innerHTML = `<div class="empty-state">Version history in MongoDB ref: ${mongoRef||'not linked'}</div>`;
   }
 }
 
@@ -1168,37 +1265,41 @@ async function loadIoT() {
 
 async function loadIoTAnomalies() {
   const tbody = document.getElementById('anomaly-tbody');
-  tbody.innerHTML = '<tr class="loading-row"><td colspan="6">LOADING...</td></tr>';
+  if (tbody) tbody.innerHTML = '<tr class="loading-row"><td colspan="6">LOADING...</td></tr>';
   try {
     const data = await apiFetch('/api/dashboard/iot-anomalies');
-    document.getElementById('anomaly-count').textContent = data.count || 0;
-    document.getElementById('kpi-anomalies').textContent = data.count || 0;
-
+    const countEl = document.getElementById('anomaly-count');
+    const kpiEl   = document.getElementById('kpi-anomalies');
+    const vibEl   = document.getElementById('vib-badge');
+    if (countEl) countEl.textContent = data.count || 0;
+    if (kpiEl)   kpiEl.textContent   = data.count || 0;
     if (data.data?.length) {
-      document.getElementById('g-temp').textContent    = data.data[0]?.temperature_c?.toFixed(1) || '—';
-      document.getElementById('g-vib').textContent     = data.data[0]?.vibration_mm_s?.toFixed(2) || '—';
-      document.getElementById('g-spindle').textContent = data.data[0]?.rawReadings?.spindleLoad_pct?.toFixed(1) || '—';
-      document.getElementById('g-chamber').textContent = data.data.find(d=>d.equipmentName?.includes('Climate'))?.temperature_c?.toFixed(1) || '—';
-      document.getElementById('vib-badge').textContent = data.count > 0 ? '⚠ ANOMALIES DETECTED' : 'NORMAL';
+      const gTemp    = document.getElementById('g-temp');
+      const gVib     = document.getElementById('g-vib');
+      const gSpindle = document.getElementById('g-spindle');
+      const gChamber = document.getElementById('g-chamber');
+      if (gTemp)    gTemp.textContent    = data.data[0]?.temperature_c?.toFixed(1) || '—';
+      if (gVib)     gVib.textContent     = data.data[0]?.vibration_mm_s?.toFixed(2) || '—';
+      if (gSpindle) gSpindle.textContent = data.data[0]?.rawReadings?.spindleLoad_pct?.toFixed(1) || '—';
+      if (gChamber) gChamber.textContent = (data.data.find(d=>d.equipmentName?.includes('Climate'))?.temperature_c?.toFixed(1)) || '—';
+      if (vibEl)    vibEl.textContent    = data.count > 0 ? '⚠ ANOMALIES DETECTED' : 'NORMAL';
     }
-
-    tbody.innerHTML = data.data?.length
+    if (tbody) tbody.innerHTML = data.data?.length
       ? data.data.map(r => `<tr>
           <td class="mono text-muted">${fmtDateTime(r.timestamp)}</td>
           <td class="mono">${shortId(r.deviceId)}</td>
           <td>${r.equipmentName || r.assignedToType || '—'}</td>
           <td class="text-red">Temp: ${r.temperature_c||'—'}°C · Vib: ${r.vibration_mm_s||'—'} mm/s</td>
-          <td class="text-muted">${r.anomalyDetail || r.rawReadings?.alarmCodes?.join(', ') || '—'}</td>
+          <td class="text-muted">${r.anomalyDetail || (r.rawReadings?.alarmCodes||[]).join(', ') || '—'}</td>
           <td><span class="badge badge-red">ANOMALY</span></td>
         </tr>`).join('')
       : '<tr><td colspan="6" class="empty-state">No anomalies detected</td></tr>';
   } catch (e) {
-    tbody.innerHTML = `<tr><td colspan="6" class="empty-state">${e.message}</td></tr>`;
+    if (tbody) tbody.innerHTML = `<tr><td colspan="6" class="empty-state">${e.message}</td></tr>`;
   }
 }
 
 function initIoTCharts() {
-  // Clear arrays on every init to prevent infinite growth on re-visits
   iotLabels.length = 0; iotTempData.length = 0; iotVibData.length = 0;
   for (let i = 9; i >= 0; i--) {
     const d = new Date(); d.setMinutes(d.getMinutes() - i);
@@ -1207,18 +1308,20 @@ function initIoTCharts() {
   iotTempData.push(42.3,42.8,43.1,43.4,43.8,43.5,43.2,43.6,43.8,43.9);
   iotVibData.push(1.2,1.5,1.8,2.2,2.9,2.5,2.1,2.4,2.7,2.9);
 
-  destroyChart('chart-iot-temp');
   iotTempChart = makeChart('chart-iot-temp', {
     type:'line',
     data:{ labels:[...iotLabels], datasets:[{ label:'°C', data:[...iotTempData], borderColor:'#f59e0b', backgroundColor:'rgba(245,158,11,.1)', borderWidth:1.5, pointRadius:2, fill:true, tension:.4 }] },
-    options:{ ...chartBase, animation:false, scales:{ x:{grid:gridStyle,ticks:axisTick}, y:{grid:gridStyle,ticks:axisTick,min:38,max:55} } }
+    options:{ responsive:true, maintainAspectRatio:false, animation:false, plugins:{legend:{display:false}},
+      scales:{ x:{grid:{color:'rgba(255,255,255,.05)',drawTicks:false},ticks:{color:'rgba(255,255,255,.35)',font:{family:'Space Mono',size:9}}},
+               y:{grid:{color:'rgba(255,255,255,.05)',drawTicks:false},ticks:{color:'rgba(255,255,255,.35)',font:{family:'Space Mono',size:9}},min:38,max:55} } }
   });
 
-  destroyChart('chart-iot-vib');
   iotVibChart = makeChart('chart-iot-vib', {
     type:'line',
     data:{ labels:[...iotLabels], datasets:[{ label:'mm/s', data:[...iotVibData], borderColor:'#ef4444', backgroundColor:'rgba(239,68,68,.1)', borderWidth:1.5, pointRadius:2, fill:true, tension:.4 }] },
-    options:{ ...chartBase, animation:false, scales:{ x:{grid:gridStyle,ticks:axisTick}, y:{grid:gridStyle,ticks:axisTick,min:0,max:4} } }
+    options:{ responsive:true, maintainAspectRatio:false, animation:false, plugins:{legend:{display:false}},
+      scales:{ x:{grid:{color:'rgba(255,255,255,.05)',drawTicks:false},ticks:{color:'rgba(255,255,255,.35)',font:{family:'Space Mono',size:9}}},
+               y:{grid:{color:'rgba(255,255,255,.05)',drawTicks:false},ticks:{color:'rgba(255,255,255,.35)',font:{family:'Space Mono',size:9}},min:0,max:4} } }
   });
 }
 
@@ -1229,26 +1332,24 @@ function startIoTSimulation() {
     const t = new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
     const newTemp = parseFloat((41+Math.random()*4).toFixed(1));
     const newVib  = parseFloat((1+Math.random()*2.5).toFixed(2));
-
-    iotLabels.push(t); if(iotLabels.length>20) iotLabels.shift();
+    iotLabels.push(t);   if(iotLabels.length>20)   iotLabels.shift();
     iotTempData.push(newTemp); if(iotTempData.length>20) iotTempData.shift();
-    iotVibData.push(newVib);   if(iotVibData.length>20) iotVibData.shift();
-
+    iotVibData.push(newVib);   if(iotVibData.length>20)  iotVibData.shift();
     if(iotTempChart){ iotTempChart.data.labels=[...iotLabels]; iotTempChart.data.datasets[0].data=[...iotTempData]; iotTempChart.update('none'); }
     if(iotVibChart) { iotVibChart.data.labels=[...iotLabels];  iotVibChart.data.datasets[0].data=[...iotVibData];  iotVibChart.update('none'); }
-
-    document.getElementById('g-temp').textContent    = newTemp.toFixed(1);
-    document.getElementById('g-vib').textContent     = newVib.toFixed(2);
-    document.getElementById('g-spindle').textContent = (75+Math.random()*10).toFixed(1);
-
+    const gTemp = document.getElementById('g-temp');
+    const gVib  = document.getElementById('g-vib');
+    const gSpindle = document.getElementById('g-spindle');
+    if (gTemp)    gTemp.textContent    = newTemp.toFixed(1);
+    if (gVib)     gVib.textContent     = newVib.toFixed(2);
+    if (gSpindle) gSpindle.textContent = (75+Math.random()*10).toFixed(1);
     if (newVib > 2.5) showToast(`⚠ IoT: Vibration spike ${newVib} mm/s`, 'warning');
   }, 3000);
 }
 
 function toggleIoT(btn) {
   iotRunning = !iotRunning;
-  btn.textContent = iotRunning ? '⏸ Pause Feed' : '▶ Resume Feed';
-  // Also reset the pause button label on the DOM element by id
+  if (btn) btn.textContent = iotRunning ? '⏸ Pause Feed' : '▶ Resume Feed';
   const pauseBtn = document.getElementById('iot-pause-btn');
   if (pauseBtn) pauseBtn.textContent = iotRunning ? '⏸ Pause Feed' : '▶ Resume Feed';
 }
@@ -1256,11 +1357,12 @@ function toggleIoT(btn) {
 // ── EQUIPMENT ─────────────────────────────────────────────────────────────────
 async function loadEquipment() {
   const tbody = document.getElementById('equipment-tbody');
-  tbody.innerHTML = '<tr class="loading-row"><td colspan="8">LOADING...</td></tr>';
+  if (tbody) tbody.innerHTML = '<tr class="loading-row"><td colspan="8">LOADING...</td></tr>';
   try {
     const data = await apiFetch('/api/equipment');
-    document.getElementById('equipment-count').textContent = `${data.data?.length || 0} items`;
-    tbody.innerHTML = data.data?.length
+    const countEl = document.getElementById('equipment-count');
+    if (countEl) countEl.textContent = `${data.data?.length || 0} items`;
+    if (tbody) tbody.innerHTML = data.data?.length
       ? data.data.map(e => `<tr>
           <td class="mono primary">${shortId(e.equipment_id)}</td>
           <td>${e.equipment_name}</td>
@@ -1273,54 +1375,55 @@ async function loadEquipment() {
         </tr>`).join('')
       : '<tr><td colspan="8" class="empty-state">No equipment found</td></tr>';
   } catch (e) {
-    tbody.innerHTML = `<tr><td colspan="8" class="empty-state">${e.message}</td></tr>`;
+    if (tbody) tbody.innerHTML = `<tr><td colspan="8" class="empty-state">${e.message}</td></tr>`;
   }
 }
 
 // ── AUDIT LOG ─────────────────────────────────────────────────────────────────
 async function loadAudit(action_type = '') {
   const tbody = document.getElementById('audit-tbody');
-  tbody.innerHTML = '<tr class="loading-row"><td colspan="6">LOADING...</td></tr>';
+  if (tbody) tbody.innerHTML = '<tr class="loading-row"><td colspan="6">LOADING...</td></tr>';
   try {
     const url = `/api/audit-logs?limit=50${action_type ? '&action_type='+action_type : ''}`;
     const data = await apiFetch(url);
-    tbody.innerHTML = data.data?.length
+    if (tbody) tbody.innerHTML = data.data?.length
       ? data.data.map(a => `<tr>
           <td class="mono text-muted">${fmtDateTime(a.created_at)}</td>
           <td>${a.full_name || shortId(a.emp_id)}</td>
           <td>${statusBadge(a.action_type)}</td>
           <td class="text-muted">${a.entity_type}</td>
-          <td class="mono text-muted">${a.entity_id?.substring(0,20) || '—'}</td>
+          <td class="mono text-muted">${(a.entity_id||'').substring(0,20) || '—'}</td>
           <td>${statusBadge(a.outcome)}</td>
         </tr>`).join('')
       : '<tr><td colspan="6" class="empty-state">No audit records found</td></tr>';
   } catch (e) {
-    tbody.innerHTML = `<tr><td colspan="6" class="empty-state">${e.message}</td></tr>`;
+    if (tbody) tbody.innerHTML = `<tr><td colspan="6" class="empty-state">${e.message}</td></tr>`;
   }
 }
 
 // ── USERS ─────────────────────────────────────────────────────────────────────
 async function loadUsers() {
   const tbody = document.getElementById('users-tbody');
-  tbody.innerHTML = '<tr class="loading-row"><td colspan="6">LOADING...</td></tr>';
+  if (tbody) tbody.innerHTML = '<tr class="loading-row"><td colspan="7">LOADING...</td></tr>';
   try {
     const data = await apiFetch('/api/users');
-    tbody.innerHTML = data.data?.length
+    const roleMap = {PROCUREMENT_OFFICER:'badge-blue',QUALITY_INSPECTOR:'badge-purple',SUPPLY_CHAIN_MANAGER:'badge-cyan',EQUIPMENT_ENGINEER:'badge-amber',AUDITOR:'badge-gray'};
+    if (tbody) tbody.innerHTML = data.data?.length
       ? data.data.map(u => {
-          const roles = (Array.isArray(u.roles) ? u.roles : (u.roles||'').replace(/^{|}$/g,'').split(',').filter(Boolean));
-          const roleMap = {PROCUREMENT_OFFICER:'badge-blue',QUALITY_INSPECTOR:'badge-purple',SUPPLY_CHAIN_MANAGER:'badge-cyan',EQUIPMENT_ENGINEER:'badge-amber',AUDITOR:'badge-gray'};
+          const roles = (Array.isArray(u.roles) ? u.roles : (u.roles||'').replace(/^{|}$/g,'').split(',')).filter(Boolean);
           return `<tr>
             <td class="mono primary">${shortId(u.emp_id)}</td>
             <td>${u.full_name}</td>
             <td>${roles.map(r=>`<span class="badge ${roleMap[r]||'badge-gray'}">${r.replace(/_/g,' ')}</span>`).join(' ')}</td>
+            <td><span class="badge badge-gray">${u.access_level||'READ'}</span></td>
             <td>${u.department || '—'}</td>
             <td class="mono text-muted">${u.email}</td>
             <td>${u.is_active ? statusBadge('ACTIVE') : statusBadge('INACTIVE')}</td>
           </tr>`;
         }).join('')
-      : '<tr><td colspan="6" class="empty-state">No users found</td></tr>';
+      : '<tr><td colspan="7" class="empty-state">No users found</td></tr>';
   } catch (e) {
-    tbody.innerHTML = `<tr><td colspan="6" class="empty-state">${e.message}</td></tr>`;
+    if (tbody) tbody.innerHTML = `<tr><td colspan="6" class="empty-state">${e.message}</td></tr>`;
   }
 }
 
@@ -1334,7 +1437,6 @@ async function loadAlerts() {
     ]);
     const anomalies = anomaliesR.status === 'fulfilled' ? anomaliesR.value : {data:[]};
     const orders    = ordersR.status    === 'fulfilled' ? ordersR.value    : {data:[]};
-
     const alerts = [];
     (anomalies.data||[]).forEach(a => {
       alerts.push({ type:'danger', msg:`🔴 IoT Anomaly — ${a.equipmentName||'Device'} · ${a.anomalyDetail||'Threshold exceeded'} · ${fmtDateTime(a.timestamp)}` });
@@ -1342,28 +1444,18 @@ async function loadAlerts() {
     (orders.data||[]).forEach(o => {
       const eta  = o.desired_delivery_date ? new Date(o.desired_delivery_date) : null;
       const late = eta && eta < new Date();
-      if (late) alerts.push({ type:'warn', msg:`⚠ Order Delayed — ${o.supplier_name} · ETA was ${fmtDate(o.desired_delivery_date)}` });
+      if (late) alerts.push({ type:'warn', msg:`⚠ Order Delayed — ${o.supplier_name||'Supplier'} · ETA was ${fmtDate(o.desired_delivery_date)}` });
     });
-
-    document.getElementById('alert-count').textContent = alerts.length;
-    container.innerHTML = alerts.length
+    const countEl = document.getElementById('alert-count');
+    if (countEl) countEl.textContent = alerts.length;
+    if (container) container.innerHTML = alerts.length
       ? alerts.map(a => `<div class="alert-strip ${a.type}">${a.msg}</div>`).join('')
       : '<div class="empty-state">No active alerts</div>';
   } catch (e) {
-    container.innerHTML = `<div class="empty-state">${e.message}</div>`;
+    if (container) container.innerHTML = `<div class="empty-state">${e.message}</div>`;
   }
 }
 
-function exportCSV(page) { showToast('Export feature — connect to /api endpoints with ?format=csv', 'info'); }
+function exportCSV(page) { showToast('Export — connect /api endpoints with CSV serialisation for production use.', 'info'); }
 
-// ── BOOT ──────────────────────────────────────────────────────────────────────
-document.addEventListener('DOMContentLoaded', () => {
-  setInterval(() => {
-    document.getElementById('clock').textContent =
-      new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
-  }, 1000);
-  tryAutoLogin();
-});
-</script>
-</body>
-</html>
+

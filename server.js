@@ -39,6 +39,17 @@ const path = require("path");
 const app  = express();
 const PORT = process.env.PORT || 3000;
 
+// ── Derive access level from roles (scenario requirement 6.2) ────────────────
+function deriveAccessLevel(roles) {
+  const r = parseRoles(roles);
+  if (r.includes('AUDITOR'))              return 'AUDIT';
+  if (r.includes('QUALITY_INSPECTOR'))    return 'APPROVE';
+  if (r.includes('SUPPLY_CHAIN_MANAGER')) return 'READ_WRITE';
+  if (r.includes('PROCUREMENT_OFFICER'))  return 'WRITE';
+  if (r.includes('EQUIPMENT_ENGINEER'))   return 'WRITE';
+  return 'READ';
+}
+
 // ── Safe roles parser — handles array, postgres string "{ROLE1,ROLE2}", or null
 function parseRoles(r) {
   if (!r) return [];
@@ -1133,7 +1144,9 @@ app.get("/api/users/me", authenticate, async (req, res) => {
         GROUP BY u.emp_id`,
       [req.user.emp_id]
     );
-    res.json({ success: true, data: rows[0] });
+    const user = rows[0];
+    if (user) user.access_level = deriveAccessLevel(user.roles);
+    res.json({ success: true, data: user });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -1152,7 +1165,8 @@ app.get("/api/users", authenticate,
           GROUP BY u.emp_id
           ORDER BY u.full_name`
       );
-      res.json({ success: true, data: rows });
+      const withAccess = rows.map(u => ({ ...u, access_level: deriveAccessLevel(u.roles) }));
+      res.json({ success: true, data: withAccess });
     } catch (err) {
       res.status(500).json({ success: false, message: err.message });
     }
