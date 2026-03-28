@@ -339,7 +339,41 @@ td.mono{font-family:var(--font-mono);font-size:10px}
     <div class="page" id="page-orders">
       <div class="page-header">
         <div><div class="page-title">Purchase Orders</div><div class="page-sub">Procurement lifecycle</div></div>
-        <div class="header-actions"><button class="btn btn-primary btn-sm" onclick="loadOrders()">↺ Refresh</button></div>
+        <div class="header-actions">
+          <button class="btn btn-primary btn-sm" id="btn-create-order" onclick="showCreateOrder()" style="display:none">+ Create Order</button>
+          <button class="btn btn-ghost btn-sm" onclick="loadOrders()">↺ Refresh</button>
+        </div>
+      </div>
+      <!-- Create Order Form (Procurement Officer only) -->
+      <div id="create-order-form" style="display:none" class="panel panel-accent mb-4">
+        <div class="panel-head">
+          <div class="panel-title">+ New Purchase Order</div>
+          <button class="btn btn-ghost btn-sm" onclick="hideCreateOrder()">✕ Cancel</button>
+        </div>
+        <div class="panel-body">
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">
+            <div>
+              <label style="font-size:9px;letter-spacing:2px;color:var(--text3);text-transform:uppercase;display:block;margin-bottom:6px">Supplier</label>
+              <select id="co-supplier" class="filter-select" style="width:100%">
+                <option value="">Select supplier...</option>
+                <option value="a1000000-0000-0000-0000-000000000001">Global AeroParts Ltd.</option>
+                <option value="a1000000-0000-0000-0000-000000000002">SkyForge Components Inc.</option>
+                <option value="a1000000-0000-0000-0000-000000000003">AeroTech Structures S.A.</option>
+                <option value="a1000000-0000-0000-0000-000000000004">PrecisionAlloys Co.</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:9px;letter-spacing:2px;color:var(--text3);text-transform:uppercase;display:block;margin-bottom:6px">Order Date</label>
+              <input id="co-order-date" type="date" class="search-input" style="width:100%;margin-bottom:0"/>
+            </div>
+            <div>
+              <label style="font-size:9px;letter-spacing:2px;color:var(--text3);text-transform:uppercase;display:block;margin-bottom:6px">Desired Delivery</label>
+              <input id="co-delivery-date" type="date" class="search-input" style="width:100%;margin-bottom:0"/>
+            </div>
+          </div>
+          <div id="create-order-error" style="color:var(--red);font-size:10px;margin-bottom:8px;min-height:14px"></div>
+          <button class="btn btn-primary" onclick="submitCreateOrder()">Submit Order</button>
+        </div>
       </div>
       <div class="search-bar">
         <input class="search-input" placeholder="Search orders..." oninput="filterTable(this,'orders-tbody')"/>
@@ -380,8 +414,48 @@ td.mono{font-family:var(--font-mono);font-size:10px}
     <!-- QC REPORTS -->
     <div class="page" id="page-qc">
       <div class="page-header">
-        <div><div class="page-title">QC Reports</div><div class="page-sub">Inspection results · Version history</div></div>
-        <div class="header-actions"><button class="btn btn-primary btn-sm" onclick="loadQC()">↺ Refresh</button></div>
+        <div><div class="page-title">QC Reports</div><div class="page-sub">Inspection results · Entry forms · Version history</div></div>
+        <div class="header-actions">
+          <button class="btn btn-primary btn-sm" id="btn-create-qc" onclick="showCreateQC()" style="display:none">+ New Report</button>
+          <button class="btn btn-ghost btn-sm" onclick="loadQC()">↺ Refresh</button>
+        </div>
+      </div>
+      <!-- QC Report Entry Form (Quality Inspector only) -->
+      <div id="create-qc-form" style="display:none" class="panel panel-accent mb-4">
+        <div class="panel-head">
+          <div class="panel-title">+ New QC Inspection Report</div>
+          <button class="btn btn-ghost btn-sm" onclick="hideCreateQC()">✕ Cancel</button>
+        </div>
+        <div class="panel-body">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+            <div>
+              <label style="font-size:9px;letter-spacing:2px;color:var(--text3);text-transform:uppercase;display:block;margin-bottom:6px">Report Type</label>
+              <select id="qc-type" class="filter-select" style="width:100%">
+                <option value="VISUAL_INSPECTION">Visual Inspection</option>
+                <option value="DIMENSIONAL_CHECK">Dimensional Check</option>
+                <option value="NON_DESTRUCTIVE_TESTING">Non-Destructive Testing</option>
+                <option value="ENVIRONMENTAL_STRESS">Environmental Stress</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:9px;letter-spacing:2px;color:var(--text3);text-transform:uppercase;display:block;margin-bottom:6px">Delivered Item ID</label>
+              <input id="qc-item-id" type="text" class="search-input" placeholder="e.g. j1000000-0000-..." style="width:100%;margin-bottom:0"/>
+            </div>
+          </div>
+          <div style="margin-bottom:12px">
+            <label style="font-size:9px;letter-spacing:2px;color:var(--text3);text-transform:uppercase;display:block;margin-bottom:6px">Inspection Notes / Results Summary</label>
+            <textarea id="qc-notes" rows="3" class="search-input" placeholder="Describe findings, measurements, or pass/fail verdict..." style="width:100%;resize:vertical;min-height:70px;margin-bottom:0"></textarea>
+          </div>
+          <div style="margin-bottom:12px">
+            <label style="font-size:9px;letter-spacing:2px;color:var(--text3);text-transform:uppercase;display:block;margin-bottom:6px">Initial Status</label>
+            <select id="qc-status" class="filter-select">
+              <option value="DRAFT">Draft</option>
+              <option value="SUBMITTED">Submitted</option>
+            </select>
+          </div>
+          <div id="create-qc-error" style="color:var(--red);font-size:10px;margin-bottom:8px;min-height:14px"></div>
+          <button class="btn btn-primary" onclick="submitCreateQC()">Submit QC Report</button>
+        </div>
       </div>
       <div class="search-bar">
         <input class="search-input" placeholder="Search QC reports..." oninput="filterTable(this,'qc-tbody')"/>
@@ -415,6 +489,36 @@ td.mono{font-family:var(--font-mono);font-size:10px}
         <div class="header-actions"><button class="btn btn-primary btn-sm" onclick="loadCertifications()">↺ Refresh</button></div>
       </div>
       <div class="alert-strip info">🔒 Certifications are immutable once approved — no modifications permitted after locking.</div>
+      <div id="auditor-flag-panel" style="display:none;margin-bottom:16px">
+        <div class="panel" style="border-color:var(--red)">
+          <div class="panel-head" style="border-bottom-color:var(--red)">
+            <div class="panel-title" style="color:var(--red)">⚑ Flag Non-Compliance</div>
+          </div>
+          <div class="panel-body">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+              <div>
+                <label style="font-size:9px;letter-spacing:2px;color:var(--text3);text-transform:uppercase;display:block;margin-bottom:6px">Entity Type</label>
+                <select id="flag-entity-type" class="filter-select" style="width:100%">
+                  <option>CERTIFICATION</option>
+                  <option>QC_REPORT</option>
+                  <option>SHIPMENT</option>
+                  <option>SUPPLIER</option>
+                </select>
+              </div>
+              <div>
+                <label style="font-size:9px;letter-spacing:2px;color:var(--text3);text-transform:uppercase;display:block;margin-bottom:6px">Entity ID</label>
+                <input id="flag-entity-id" type="text" class="search-input" placeholder="UUID of record to flag..." style="width:100%;margin-bottom:0"/>
+              </div>
+            </div>
+            <div style="margin-bottom:12px">
+              <label style="font-size:9px;letter-spacing:2px;color:var(--text3);text-transform:uppercase;display:block;margin-bottom:6px">Non-Compliance Reason</label>
+              <textarea id="flag-reason" rows="2" class="search-input" placeholder="Describe the non-compliance issue..." style="width:100%;resize:vertical;margin-bottom:0"></textarea>
+            </div>
+            <div id="flag-error" style="color:var(--red);font-size:10px;margin-bottom:8px;min-height:14px"></div>
+            <button class="btn btn-sm" style="background:var(--red);color:#fff;border:none" onclick="submitFlag()">⚑ Submit Flag</button>
+          </div>
+        </div>
+      </div>
       <div class="grid-2 mb-4">
         <div class="panel">
           <div class="panel-head"><div class="panel-title">Inspector Certification Approvals</div></div>
@@ -846,7 +950,20 @@ function applyRBAC() {
     main.insertBefore(banner, main.firstChild);
   }
 
-  // 4. Navigate to role default page
+  // 4. Show role-specific UI elements
+  const isProc  = role === 'PROCUREMENT_OFFICER';
+  const isQI    = role === 'QUALITY_INSPECTOR';
+  const isAudit = role === 'AUDITOR';
+
+  const btnOrder = document.getElementById('btn-create-order');
+  const btnQC    = document.getElementById('btn-create-qc');
+  const flagPanel= document.getElementById('auditor-flag-panel');
+
+  if (btnOrder)  btnOrder.style.display  = isProc  ? '' : 'none';
+  if (btnQC)     btnQC.style.display     = isQI    ? '' : 'none';
+  if (flagPanel) flagPanel.style.display = isAudit  ? '' : 'none';
+
+  // 5. Navigate to role default page
   const defaultPage = config.pages.includes(config.default) ? config.default : config.pages[0];
   const navItem = document.querySelector(`.nav-item[data-page="${defaultPage}"]`);
   if (navItem) nav(navItem);
