@@ -1605,10 +1605,18 @@ async function submitCreateOrder() {
   if (!supplierId)   { if(errEl) errEl.textContent = 'Please select a supplier.'; return; }
   if (!orderDate)    { if(errEl) errEl.textContent = 'Please enter an order date.'; return; }
   if (!deliveryDate) { if(errEl) errEl.textContent = 'Please enter a desired delivery date.'; return; }
+  // API requires at least one order line — use a default part for the selected supplier
+  const supplierPartMap = {
+    'a1000000-0000-0000-0000-000000000001': 'd1000000-0000-0000-0000-000000000001',
+    'a1000000-0000-0000-0000-000000000002': 'd1000000-0000-0000-0000-000000000002',
+    'a1000000-0000-0000-0000-000000000003': 'd1000000-0000-0000-0000-000000000003',
+    'a1000000-0000-0000-0000-000000000004': 'd1000000-0000-0000-0000-000000000004',
+  };
+  const defaultLine = [{ supplier_part_id: supplierPartMap[supplierId] || 'd1000000-0000-0000-0000-000000000001', quantity: 1 }];
   try {
     const res = await apiFetch('/api/orders', {
       method: 'POST',
-      body: JSON.stringify({ supplier_id: supplierId, order_date: orderDate, desired_delivery_date: deliveryDate })
+      body: JSON.stringify({ supplier_id: supplierId, order_date: orderDate, desired_delivery_date: deliveryDate, lines: defaultLine })
     });
     if (res.success) {
       showToast('Purchase order created successfully.', 'success');
@@ -1645,10 +1653,24 @@ async function submitCreateQC() {
   const errEl           = document.getElementById('create-qc-error');
   if (errEl) errEl.textContent = '';
   if (!deliveredItemId) { if(errEl) errEl.textContent = 'Delivered item ID is required.'; return; }
+  const today = new Date().toISOString().split('T')[0];
+  // Build a minimal results object matching the report type
+  const resultsMap = {
+    VISUAL_INSPECTION:      { visualInspection: notes || 'Inspection completed', verdict: status === 'SUBMITTED' ? 'Pass' : 'Pending' },
+    DIMENSIONAL_CHECK:      { dimensionalTolerance: { result: 'Pending', measurements: [], notes: notes || '' } },
+    NON_DESTRUCTIVE_TESTING:{ nonDestructiveTesting: { type: 'Ultrasonic', result: 'Pending', findings: [], comments: notes || '' } },
+    ENVIRONMENTAL_STRESS:   { environmentalTest: { result: 'Pending', notes: notes || '' } },
+  };
   try {
     const res = await apiFetch('/api/qc-reports', {
       method: 'POST',
-      body: JSON.stringify({ delivered_item_id: deliveredItemId, report_type: reportType, current_status: status, notes })
+      body: JSON.stringify({
+        delivered_item_id: deliveredItemId,
+        report_type: reportType,
+        results: resultsMap[reportType] || { notes: notes || '' },
+        inspectionDate: today,
+        notes
+      })
     });
     if (res.success) {
       showToast('QC report created successfully.', 'success');
@@ -1686,32 +1708,31 @@ document.addEventListener('DOMContentLoaded', function() {
     var action = el.getAttribute('data-action');
     if (!action) return;
     try {
-      // Extract function name and args
       var match = action.match(/^(\w+)\((.*)\)$/);
       if (!match) return;
-      var fnName = match[1];
+      var fnName  = match[1];
       var argsStr = match[2].trim();
       var fn = window[fnName];
-      if (typeof fn !== 'function') {
-        console.error('Action not found:', fnName);
-        return;
-      }
+      if (typeof fn !== 'function') { console.error('Action not found:', fnName); return; }
+
+      // Special case: nav(this) passes the element itself
+      if (fnName === 'nav' && argsStr === 'this') { fn(el); return; }
+      // Special case: toggleIoT(this) passes the element itself
+      if (argsStr === 'this') { fn(el); return; }
+
       if (!argsStr) {
         fn();
       } else {
-        // Parse simple string/bool args
         var args = argsStr.split(',').map(function(a) {
           a = a.trim();
-          if (a === 'true') return true;
+          if (a === 'true')  return true;
           if (a === 'false') return false;
-          if ((a[0] === "'" && a[a.length-1] === "'") || (a[0] === '"' && a[a.length-1] === '"')) return a.slice(1,-1);
+          if ((a[0]==="'" && a[a.length-1]==="'") || (a[0]==='"' && a[a.length-1]==='"')) return a.slice(1,-1);
           return a;
         });
         fn.apply(null, args);
       }
-    } catch(err) {
-      console.error('Action error:', action, err);
-    }
+    } catch(err) { console.error('Action error:', action, err); }
   });
 });
 
