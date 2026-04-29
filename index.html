@@ -1637,7 +1637,8 @@ async function submitCreateOrder() {
       hideCreateOrder();
       loadOrders();
     } else {
-      if (errEl) errEl.textContent = res.message || 'Failed to create order.';
+      const detail = res.errors ? res.errors.map(e => e.msg).join(', ') : (res.message || 'Failed to create order.');
+      if (errEl) errEl.textContent = detail;
     }
   } catch (e) {
     if (errEl) errEl.textContent = e.message;
@@ -1685,23 +1686,25 @@ async function submitCreateQC() {
   const errEl           = document.getElementById('create-qc-error');
   if (errEl) errEl.textContent = '';
   if (!deliveredItemId) { if(errEl) errEl.textContent = 'Please select a delivered item.'; return; }
-  const today = new Date().toISOString().split('T')[0];
+  // Full ISO8601 datetime required by express-validator
+  const today = new Date().toISOString();  // e.g. 2026-04-29T13:09:00.000Z
   // Build a minimal results object matching the report type
   const resultsMap = {
-    VISUAL_INSPECTION:      { visualInspection: notes || 'Inspection completed', verdict: status === 'SUBMITTED' ? 'Pass' : 'Pending' },
-    DIMENSIONAL_CHECK:      { dimensionalTolerance: { result: 'Pending', measurements: [], notes: notes || '' } },
-    NON_DESTRUCTIVE_TESTING:{ nonDestructiveTesting: { type: 'Ultrasonic', result: 'Pending', findings: [], comments: notes || '' } },
-    ENVIRONMENTAL_STRESS:   { environmentalTest: { result: 'Pending', notes: notes || '' } },
+    VISUAL_INSPECTION:       { visualInspection: notes || 'Inspection completed', verdict: 'Pending' },
+    DIMENSIONAL_CHECK:       { dimensionalTolerance: { result: 'Pending', measurements: [], notes: notes || 'Pending' } },
+    NON_DESTRUCTIVE_TESTING: { nonDestructiveTesting: { type: 'Ultrasonic', result: 'Pending', findings: [], comments: notes || 'Pending' } },
+    ENVIRONMENTAL_STRESS:    { environmentalTest: { standard: 'MIL-STD-810H', result: 'Pending', notes: notes || 'Pending' } },
   };
+  const resultsPayload = resultsMap[reportType] || { notes: notes || 'Pending' };
   try {
     const res = await apiFetch('/api/qc-reports', {
       method: 'POST',
       body: JSON.stringify({
         delivered_item_id: deliveredItemId,
-        report_type: reportType,
-        results: resultsMap[reportType] || { notes: notes || '' },
-        inspectionDate: today,
-        notes
+        report_type:       reportType,
+        results:           resultsPayload,
+        inspectionDate:    today,
+        notes:             notes || null
       })
     });
     if (res.success) {
@@ -1709,7 +1712,9 @@ async function submitCreateQC() {
       hideCreateQC();
       loadQC();
     } else {
-      if (errEl) errEl.textContent = res.message || 'Failed to create QC report.';
+      // Show detailed validation errors if available
+      const detail = res.errors ? res.errors.map(e => e.msg).join(', ') : (res.message || 'Failed to create QC report.');
+      if (errEl) errEl.textContent = detail;
     }
   } catch (e) {
     if (errEl) errEl.textContent = e.message;
