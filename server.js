@@ -39,7 +39,15 @@ const path = require("path");
 const app  = express();
 const PORT = process.env.PORT || 3000;
 
-// ── Derive access level from roles (scenario requirement 6.2) ────────────────
+// Safe roles parser — ARRAY_AGG can return "{ROLE}" string, array, or null
+function parseRoles(r) {
+  if (!r) return [];
+  if (Array.isArray(r)) return r.filter(Boolean);
+  if (typeof r === 'string') return r.replace(/^{|}$/g,'').split(',').filter(Boolean);
+  return [];
+}
+
+// Derive access level from role for display in Users table
 function deriveAccessLevel(roles) {
   const r = parseRoles(roles);
   if (r.includes('AUDITOR'))              return 'AUDIT';
@@ -48,14 +56,6 @@ function deriveAccessLevel(roles) {
   if (r.includes('PROCUREMENT_OFFICER'))  return 'WRITE';
   if (r.includes('EQUIPMENT_ENGINEER'))   return 'WRITE';
   return 'READ';
-}
-
-// ── Safe roles parser — handles array, postgres string "{ROLE1,ROLE2}", or null
-function parseRoles(r) {
-  if (!r) return [];
-  if (Array.isArray(r)) return r.filter(Boolean);
-  if (typeof r === 'string') return r.replace(/^{|}$/g,'').split(',').filter(Boolean);
-  return [];
 }
 
 // =============================================================================
@@ -696,6 +696,31 @@ app.get("/api/shipments/:id/items", authenticate, [param("id").isUUID()], valida
   }
 });
 
+// GET /api/delivered-items  — all delivered items (for QC report form)
+app.get("/api/delivered-items", authenticate, async (req, res) => {
+  try {
+    const { limit = 100, offset = 0 } = req.query;
+    const { rows } = await pgPool.query(
+      `SELECT di.delivered_item_id, di.serial_number, di.batch_number,
+              di.shipment_id, di.delivery_timestamp,
+              p.part_name, sh.tracking_number, s.business_name AS supplier_name
+         FROM delivered_item di
+         JOIN purchase_order_line pol ON pol.order_line_id = di.order_line_id
+         JOIN supplier_part_offering spo ON spo.supplier_part_id = pol.supplier_part_id
+         JOIN part p ON p.part_id = spo.part_id
+         LEFT JOIN shipment sh ON sh.shipment_id = di.shipment_id
+         LEFT JOIN purchase_order po ON po.order_id = sh.order_id
+         LEFT JOIN supplier s ON s.supplier_id = po.supplier_id
+        ORDER BY di.delivery_timestamp DESC
+        LIMIT $1 OFFSET $2`,
+      [Number(limit), Number(offset)]
+    );
+    res.json({ success: true, count: rows.length, data: rows });
+  } catch (err) {
+    res.status(500).json({ success: false, message: err.message });
+  }
+});
+
 // =============================================================================
 // DOMAIN 3 — QC REPORTS
 // GET    /api/qc-reports
@@ -1303,7 +1328,8 @@ app.get("/api/dashboard/supplier-kpis", authenticate,
           GROUP BY s.supplier_id
           ORDER BY total_orders DESC`
       );
-      res.json({ success: true, data: rows });
+      const withAccess = rows.map(u => ({ ...u, access_level: deriveAccessLevel(u.roles) }));
+      res.json({ success: true, data: withAccess });
     } catch (err) {
       res.status(500).json({ success: false, message: err.message });
     }

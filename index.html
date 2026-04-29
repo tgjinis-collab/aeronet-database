@@ -1651,30 +1651,22 @@ async function showCreateQC() {
   if (form) form.style.display = 'block';
   if (btn)  btn.style.display  = 'none';
 
-  // Load real delivered items from API into the dropdown
+  // Load delivered items directly from the API
   const sel = document.getElementById('qc-item-id');
   if (!sel) return;
-  sel.innerHTML = '<option value="">Loading...</option>';
+  sel.innerHTML = '<option value="">Loading delivered items...</option>';
   try {
-    const data = await apiFetch('/api/shipments');
-    const shipments = data.data || [];
-    // Fetch items for each shipment
-    const allItems = [];
-    await Promise.allSettled(
-      shipments.map(async s => {
-        const r = await apiFetch(`/api/shipments/${s.shipment_id}/items`);
-        (r.data || []).forEach(item => allItems.push({ ...item, shipment: s.tracking_number }));
-      })
-    );
-    if (allItems.length) {
-      sel.innerHTML = allItems.map(i =>
-        `<option value="${i.delivered_item_id}">${i.serial_number || i.delivered_item_id.substring(0,8)} — ${i.part_name || ''} (${i.shipment || ''})</option>`
+    const data = await apiFetch('/api/delivered-items?limit=100');
+    const items = data.data || [];
+    if (items.length) {
+      sel.innerHTML = items.map(i =>
+        `<option value="${i.delivered_item_id}">${i.serial_number || shortId(i.delivered_item_id)} — ${i.part_name || 'Unknown part'} · ${i.supplier_name || ''}</option>`
       ).join('');
     } else {
-      sel.innerHTML = '<option value="">No delivered items found — run seed data first</option>';
+      sel.innerHTML = '<option value="">No delivered items in database — run seed data in Neon first</option>';
     }
   } catch(e) {
-    sel.innerHTML = '<option value="">Error loading items</option>';
+    sel.innerHTML = `<option value="">Error: ${e.message}</option>`;
   }
 }
 function hideCreateQC() {
