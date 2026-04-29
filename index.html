@@ -1804,7 +1804,7 @@ document.addEventListener('DOMContentLoaded', function() {
           a = a.trim();
           if (a === 'true')  return true;
           if (a === 'false') return false;
-          if ((a[0]==="'" && a[a.length-1]==="'") || (a[0]==='"' && a[a.length-1]==='"')) return a.slice(1,-1);
+          if (a.length > 1 && ((a[0]==="'" && a[a.length-1]==="'") || (a[0]==='"' && a[a.length-1]==='"'))) return a.slice(1,-1);
           return a;
         });
         fn.apply(null, args);
