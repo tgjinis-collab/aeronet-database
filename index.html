@@ -765,7 +765,7 @@ document.addEventListener('keydown', e => {
 // ── API HELPER ────────────────────────────────────────────────────────────────
 async function apiFetch(path, opts = {}) {
   // Always read token fresh — handles page refresh / session edge cases
-  const authToken = lsGet('aeronet_token') || token;
+  const authToken = lsGet('aeronet_token');
 
   // Validate before sending
   if (!authToken || authToken === 'null' || authToken === 'undefined' || authToken.length < 20) {
