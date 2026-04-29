@@ -764,6 +764,15 @@ document.addEventListener('keydown', e => {
 
 // ── API HELPER ────────────────────────────────────────────────────────────────
 async function apiFetch(path, opts = {}) {
+  // If no token at all, redirect to login immediately
+  const currentToken = token || lsGet('aeronet_token');
+  if (!currentToken || currentToken === 'null' || currentToken === 'undefined') {
+    doLogout();
+    throw new Error('Session expired — please log in again.');
+  }
+  // Refresh in-memory token from storage if needed
+  if (!token) token = currentToken;
+
   const res = await fetch(`${API}${path}`, {
     ...opts,
     headers: {
@@ -772,13 +781,12 @@ async function apiFetch(path, opts = {}) {
       ...(opts.headers || {})
     }
   });
-  if (res.status === 401) { doLogout(); throw new Error('Session expired'); }
+  if (res.status === 401) { doLogout(); throw new Error('Session expired — please log in again.'); }
   const ct = res.headers.get('content-type') || '';
   if (!ct.includes('application/json')) {
     throw new Error(`Server returned non-JSON response (${res.status})`);
   }
   const data = await res.json();
-  // Don't throw on HTTP errors — return data and let callers check .success
   return data;
 }
 
