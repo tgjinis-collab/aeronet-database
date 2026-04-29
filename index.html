@@ -764,30 +764,42 @@ document.addEventListener('keydown', e => {
 
 // ── API HELPER ────────────────────────────────────────────────────────────────
 async function apiFetch(path, opts = {}) {
-  // If no token at all, redirect to login immediately
-  const currentToken = token || lsGet('aeronet_token');
-  if (!currentToken || currentToken === 'null' || currentToken === 'undefined') {
-    doLogout();
-    throw new Error('Session expired — please log in again.');
-  }
-  // Refresh in-memory token from storage if needed
-  if (!token) token = currentToken;
+  // Always read token fresh — handles page refresh / session edge cases
+  const authToken = lsGet('aeronet_token') || token;
 
-  const res = await fetch(`${API}${path}`, {
-    ...opts,
-    headers: {
-      'Content-Type': 'application/json',
-      'Authorization': `Bearer ${token}`,
-      ...(opts.headers || {})
-    }
-  });
-  if (res.status === 401) { doLogout(); throw new Error('Session expired — please log in again.'); }
+  // Validate before sending
+  if (!authToken || authToken === 'null' || authToken === 'undefined' || authToken.length < 20) {
+    token = null;
+    doLogout();
+    throw new Error('No active session. Please log in.');
+  }
+
+  // Sync in-memory token
+  token = authToken;
+
+  // Build headers explicitly — avoids any spread/override issues
+  const headers = new Headers();
+  headers.set('Content-Type', 'application/json');
+  headers.set('Authorization', 'Bearer ' + authToken);
+
+  // Build request
+  const requestInit = { method: opts.method || 'GET', headers };
+  if (opts.body) requestInit.body = opts.body;
+
+  const res = await fetch(API + path, requestInit);
+
+  if (res.status === 401) {
+    token = null;
+    lsRemove('aeronet_token');
+    doLogout();
+    throw new Error('Session expired. Please log in again.');
+  }
+
   const ct = res.headers.get('content-type') || '';
   if (!ct.includes('application/json')) {
-    throw new Error(`Server returned non-JSON response (${res.status})`);
+    throw new Error('Server error (' + res.status + ')');
   }
-  const data = await res.json();
-  return data;
+  return res.json();
 }
 
 // ── CLOCK & API STATUS ────────────────────────────────────────────────────────

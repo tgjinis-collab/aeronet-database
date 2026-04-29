@@ -108,7 +108,15 @@ app.use(helmet({
     },
   },
 }));
-app.use(cors({ origin: process.env.CORS_ORIGIN || "*" }));
+app.use(cors({
+  origin: process.env.CORS_ORIGIN || '*',
+  methods: ['GET','POST','PUT','PATCH','DELETE','OPTIONS'],
+  allowedHeaders: ['Content-Type','Authorization','Accept'],
+  exposedHeaders: ['Authorization'],
+  credentials: false,
+}));
+// Handle preflight for all routes
+app.options('*', cors());
 app.use(express.json());
 app.use(morgan("dev"));
 
