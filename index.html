@@ -205,7 +205,7 @@ td.mono{font-family:var(--font-mono);font-size:10px}
     <input class="login-input" id="login-email" type="email" placeholder="j.doe@aeronetb.com" value="j.smith@aeronetb.com"/>
     <label class="login-label">Password</label>
     <input class="login-input" id="login-password" type="password" placeholder="••••••••••" value="AeroNet2025"/>
-    <button class="login-btn" id="login-btn" data-action="doLogin()">Sign In →</button>
+    <button class="login-btn" id="login-btn" onclick="doLogin()">Sign In →</button>
     <div class="login-error" id="login-error"></div>
     <div class="login-hint">
       Default password: <strong style="color:var(--cyan)">AeroNet2025</strong><br>
@@ -231,36 +231,36 @@ td.mono{font-family:var(--font-mono);font-size:10px}
       <span style="color:var(--line2)">|</span>
       <span class="role-badge" id="role-display">...</span>
       <span id="user-name" style="font-size:11px;color:var(--text2)"></span>
-      <button class="logout-btn" data-action="doLogout()">Sign Out</button>
+      <button class="logout-btn" onclick="doLogout()">Sign Out</button>
     </div>
   </header>
 
   <aside class="sidebar">
     <div class="nav-section">
       <div class="nav-label">Overview</div>
-      <div class="nav-item active" data-page="overview" data-action="nav(this)"><span class="nav-icon">◼</span> Dashboard</div>
-      <div class="nav-item" data-page="alerts" data-action="nav(this)"><span class="nav-icon">🔔</span> Alerts<span class="nav-badge" id="alert-count">0</span></div>
+      <div class="nav-item active" data-page="overview" onclick="nav(this)"><span class="nav-icon">◼</span> Dashboard</div>
+      <div class="nav-item" data-page="alerts" onclick="nav(this)"><span class="nav-icon">🔔</span> Alerts<span class="nav-badge" id="alert-count">0</span></div>
     </div>
     <div class="nav-section">
       <div class="nav-label">Operations</div>
-      <div class="nav-item" data-page="shipments" data-action="nav(this)"><span class="nav-icon">🚢</span> Shipments</div>
-      <div class="nav-item" data-page="orders" data-action="nav(this)"><span class="nav-icon">📋</span> Orders</div>
-      <div class="nav-item" data-page="suppliers" data-action="nav(this)"><span class="nav-icon">🏭</span> Suppliers</div>
+      <div class="nav-item" data-page="shipments" onclick="nav(this)"><span class="nav-icon">🚢</span> Shipments</div>
+      <div class="nav-item" data-page="orders" onclick="nav(this)"><span class="nav-icon">📋</span> Orders</div>
+      <div class="nav-item" data-page="suppliers" onclick="nav(this)"><span class="nav-icon">🏭</span> Suppliers</div>
     </div>
     <div class="nav-section">
       <div class="nav-label">Quality</div>
-      <div class="nav-item" data-page="qc" data-action="nav(this)"><span class="nav-icon">🔬</span> QC Reports</div>
-      <div class="nav-item" data-page="certifications" data-action="nav(this)"><span class="nav-icon">🔒</span> Certifications</div>
+      <div class="nav-item" data-page="qc" onclick="nav(this)"><span class="nav-icon">🔬</span> QC Reports</div>
+      <div class="nav-item" data-page="certifications" onclick="nav(this)"><span class="nav-icon">🔒</span> Certifications</div>
     </div>
     <div class="nav-section">
       <div class="nav-label">Equipment</div>
-      <div class="nav-item" data-page="iot" data-action="nav(this)"><span class="nav-icon">📡</span> IoT Monitor</div>
-      <div class="nav-item" data-page="equipment" data-action="nav(this)"><span class="nav-icon">⚙️</span> Equipment</div>
+      <div class="nav-item" data-page="iot" onclick="nav(this)"><span class="nav-icon">📡</span> IoT Monitor</div>
+      <div class="nav-item" data-page="equipment" onclick="nav(this)"><span class="nav-icon">⚙️</span> Equipment</div>
     </div>
     <div class="nav-section">
       <div class="nav-label">Admin</div>
-      <div class="nav-item" data-page="audit" data-action="nav(this)"><span class="nav-icon">📜</span> Audit Log</div>
-      <div class="nav-item" data-page="users" data-action="nav(this)"><span class="nav-icon">👥</span> Users</div>
+      <div class="nav-item" data-page="audit" onclick="nav(this)"><span class="nav-icon">📜</span> Audit Log</div>
+      <div class="nav-item" data-page="users" onclick="nav(this)"><span class="nav-icon">👥</span> Users</div>
     </div>
   </aside>
 
@@ -271,8 +271,8 @@ td.mono{font-family:var(--font-mono);font-size:10px}
       <div class="page-header">
         <div><div class="page-title">Operations Overview</div><div class="page-sub">Real-time supply chain visibility</div></div>
         <div class="header-actions">
-          <button class="btn btn-ghost btn-sm" data-action="exportCSV('overview')">⬇ Export</button>
-          <button class="btn btn-primary btn-sm" data-action="loadOverview()">↺ Refresh</button>
+          <button class="btn btn-ghost btn-sm" onclick="exportCSV('overview')">⬇ Export</button>
+          <button class="btn btn-primary btn-sm" onclick="loadOverview()">↺ Refresh</button>
         </div>
       </div>
       <div class="kpi-grid" id="kpi-grid">
@@ -323,7 +323,7 @@ td.mono{font-family:var(--font-mono);font-size:10px}
     <div class="page" id="page-shipments">
       <div class="page-header">
         <div><div class="page-title">Shipment Tracking</div><div class="page-sub">Global logistics visibility</div></div>
-        <div class="header-actions"><button class="btn btn-primary btn-sm" data-action="loadShipments()">↺ Refresh</button></div>
+        <div class="header-actions"><button class="btn btn-primary btn-sm" onclick="loadShipments()">↺ Refresh</button></div>
       </div>
       <div class="search-bar">
         <input class="search-input" placeholder="Search by tracking number, carrier..." oninput="filterTable(this,'shipments-tbody')"/>
@@ -339,41 +339,7 @@ td.mono{font-family:var(--font-mono);font-size:10px}
     <div class="page" id="page-orders">
       <div class="page-header">
         <div><div class="page-title">Purchase Orders</div><div class="page-sub">Procurement lifecycle</div></div>
-        <div class="header-actions">
-          <button class="btn btn-primary btn-sm" id="btn-create-order" data-action="showCreateOrder()" style="display:none">+ Create Order</button>
-          <button class="btn btn-ghost btn-sm" data-action="loadOrders()">↺ Refresh</button>
-        </div>
-      </div>
-      <!-- Create Order Form (Procurement Officer only) -->
-      <div id="create-order-form" style="display:none" class="panel panel-accent mb-4">
-        <div class="panel-head">
-          <div class="panel-title">+ New Purchase Order</div>
-          <button class="btn btn-ghost btn-sm" data-action="hideCreateOrder()">✕ Cancel</button>
-        </div>
-        <div class="panel-body">
-          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">
-            <div>
-              <label style="font-size:9px;letter-spacing:2px;color:var(--text3);text-transform:uppercase;display:block;margin-bottom:6px">Supplier</label>
-              <select id="co-supplier" class="filter-select" style="width:100%">
-                <option value="">Select supplier...</option>
-                <option value="a1000000-0000-0000-0000-000000000001">Global AeroParts Ltd.</option>
-                <option value="a1000000-0000-0000-0000-000000000002">SkyForge Components Inc.</option>
-                <option value="a1000000-0000-0000-0000-000000000003">AeroTech Structures S.A.</option>
-                <option value="a1000000-0000-0000-0000-000000000004">PrecisionAlloys Co.</option>
-              </select>
-            </div>
-            <div>
-              <label style="font-size:9px;letter-spacing:2px;color:var(--text3);text-transform:uppercase;display:block;margin-bottom:6px">Order Date</label>
-              <input id="co-order-date" type="date" class="search-input" style="width:100%;margin-bottom:0"/>
-            </div>
-            <div>
-              <label style="font-size:9px;letter-spacing:2px;color:var(--text3);text-transform:uppercase;display:block;margin-bottom:6px">Desired Delivery</label>
-              <input id="co-delivery-date" type="date" class="search-input" style="width:100%;margin-bottom:0"/>
-            </div>
-          </div>
-          <div id="create-order-error" style="color:var(--red);font-size:10px;margin-bottom:8px;min-height:14px"></div>
-          <button class="btn btn-primary" data-action="submitCreateOrder()">Submit Order</button>
-        </div>
+        <div class="header-actions"><button class="btn btn-primary btn-sm" onclick="loadOrders()">↺ Refresh</button></div>
       </div>
       <div class="search-bar">
         <input class="search-input" placeholder="Search orders..." oninput="filterTable(this,'orders-tbody')"/>
@@ -389,7 +355,7 @@ td.mono{font-family:var(--font-mono);font-size:10px}
     <div class="page" id="page-suppliers">
       <div class="page-header">
         <div><div class="page-title">Supplier Performance</div><div class="page-sub">KPIs · Scorecards · Analytics</div></div>
-        <div class="header-actions"><button class="btn btn-primary btn-sm" data-action="loadSuppliers()">↺ Refresh</button></div>
+        <div class="header-actions"><button class="btn btn-primary btn-sm" onclick="loadSuppliers()">↺ Refresh</button></div>
       </div>
       <div class="search-bar">
         <input class="search-input" placeholder="Search suppliers..." oninput="filterTable(this,'suppliers-tbody')"/>
@@ -414,55 +380,15 @@ td.mono{font-family:var(--font-mono);font-size:10px}
     <!-- QC REPORTS -->
     <div class="page" id="page-qc">
       <div class="page-header">
-        <div><div class="page-title">QC Reports</div><div class="page-sub">Inspection results · Entry forms · Version history</div></div>
-        <div class="header-actions">
-          <button class="btn btn-primary btn-sm" id="btn-create-qc" data-action="showCreateQC()" style="display:none">+ New Report</button>
-          <button class="btn btn-ghost btn-sm" data-action="loadQC()">↺ Refresh</button>
-        </div>
-      </div>
-      <!-- QC Report Entry Form (Quality Inspector only) -->
-      <div id="create-qc-form" style="display:none" class="panel panel-accent mb-4">
-        <div class="panel-head">
-          <div class="panel-title">+ New QC Inspection Report</div>
-          <button class="btn btn-ghost btn-sm" data-action="hideCreateQC()">✕ Cancel</button>
-        </div>
-        <div class="panel-body">
-          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
-            <div>
-              <label style="font-size:9px;letter-spacing:2px;color:var(--text3);text-transform:uppercase;display:block;margin-bottom:6px">Report Type</label>
-              <select id="qc-type" class="filter-select" style="width:100%">
-                <option value="VISUAL_INSPECTION">Visual Inspection</option>
-                <option value="DIMENSIONAL_CHECK">Dimensional Check</option>
-                <option value="NON_DESTRUCTIVE_TESTING">Non-Destructive Testing</option>
-                <option value="ENVIRONMENTAL_STRESS">Environmental Stress</option>
-              </select>
-            </div>
-            <div>
-              <label style="font-size:9px;letter-spacing:2px;color:var(--text3);text-transform:uppercase;display:block;margin-bottom:6px">Delivered Item ID</label>
-              <input id="qc-item-id" type="text" class="search-input" placeholder="e.g. j1000000-0000-..." style="width:100%;margin-bottom:0"/>
-            </div>
-          </div>
-          <div style="margin-bottom:12px">
-            <label style="font-size:9px;letter-spacing:2px;color:var(--text3);text-transform:uppercase;display:block;margin-bottom:6px">Inspection Notes / Results Summary</label>
-            <textarea id="qc-notes" rows="3" class="search-input" placeholder="Describe findings, measurements, or pass/fail verdict..." style="width:100%;resize:vertical;min-height:70px;margin-bottom:0"></textarea>
-          </div>
-          <div style="margin-bottom:12px">
-            <label style="font-size:9px;letter-spacing:2px;color:var(--text3);text-transform:uppercase;display:block;margin-bottom:6px">Initial Status</label>
-            <select id="qc-status" class="filter-select">
-              <option value="DRAFT">Draft</option>
-              <option value="SUBMITTED">Submitted</option>
-            </select>
-          </div>
-          <div id="create-qc-error" style="color:var(--red);font-size:10px;margin-bottom:8px;min-height:14px"></div>
-          <button class="btn btn-primary" data-action="submitCreateQC()">Submit QC Report</button>
-        </div>
+        <div><div class="page-title">QC Reports</div><div class="page-sub">Inspection results · Version history</div></div>
+        <div class="header-actions"><button class="btn btn-primary btn-sm" onclick="loadQC()">↺ Refresh</button></div>
       </div>
       <div class="search-bar">
         <input class="search-input" placeholder="Search QC reports..." oninput="filterTable(this,'qc-tbody')"/>
         <select class="filter-select" onchange="loadQC('','',this.value)"><option value="">All Status</option><option>DRAFT</option><option>SUBMITTED</option><option>APPROVED</option><option>REJECTED</option></select>
         <select class="filter-select" onchange="loadQC('',this.value)"><option value="">All Types</option><option>VISUAL_INSPECTION</option><option>DIMENSIONAL_CHECK</option><option>NON_DESTRUCTIVE_TESTING</option><option>ENVIRONMENTAL_STRESS</option></select>
       </div>
-      <div class="grid-3 mb-4">
+      <div class="grid-2 mb-4">
         <div class="panel">
           <div class="panel-head"><div class="panel-title">QC Status Breakdown</div></div>
           <div class="panel-body"><div class="chart-wrap"><canvas id="chart-qc-status"></canvas></div></div>
@@ -470,10 +396,6 @@ td.mono{font-family:var(--font-mono);font-size:10px}
         <div class="panel">
           <div class="panel-head"><div class="panel-title">Reports by Type</div></div>
           <div class="panel-body"><div class="chart-wrap"><canvas id="chart-qc-types"></canvas></div></div>
-        </div>
-        <div class="panel">
-          <div class="panel-head"><div class="panel-title">Failure Rate — Last 12 Months</div></div>
-          <div class="panel-body"><div class="chart-wrap"><canvas id="chart-qc-trend-12m"></canvas></div></div>
         </div>
       </div>
       <div class="panel">
@@ -485,55 +407,10 @@ td.mono{font-family:var(--font-mono);font-size:10px}
     <!-- CERTIFICATIONS -->
     <div class="page" id="page-certifications">
       <div class="page-header">
-        <div><div class="page-title">Certifications</div><div class="page-sub">Immutable records · Inspector approvals · Version history</div></div>
-        <div class="header-actions"><button class="btn btn-primary btn-sm" data-action="loadCertifications()">↺ Refresh</button></div>
+        <div><div class="page-title">Certifications</div><div class="page-sub">Immutable records · Material traceability</div></div>
       </div>
       <div class="alert-strip info">🔒 Certifications are immutable once approved — no modifications permitted after locking.</div>
-      <div id="auditor-flag-panel" style="display:none;margin-bottom:16px">
-        <div class="panel" style="border-color:var(--red)">
-          <div class="panel-head" style="border-bottom-color:var(--red)">
-            <div class="panel-title" style="color:var(--red)">⚑ Flag Non-Compliance</div>
-          </div>
-          <div class="panel-body">
-            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
-              <div>
-                <label style="font-size:9px;letter-spacing:2px;color:var(--text3);text-transform:uppercase;display:block;margin-bottom:6px">Entity Type</label>
-                <select id="flag-entity-type" class="filter-select" style="width:100%">
-                  <option>CERTIFICATION</option>
-                  <option>QC_REPORT</option>
-                  <option>SHIPMENT</option>
-                  <option>SUPPLIER</option>
-                </select>
-              </div>
-              <div>
-                <label style="font-size:9px;letter-spacing:2px;color:var(--text3);text-transform:uppercase;display:block;margin-bottom:6px">Entity ID</label>
-                <input id="flag-entity-id" type="text" class="search-input" placeholder="UUID of record to flag..." style="width:100%;margin-bottom:0"/>
-              </div>
-            </div>
-            <div style="margin-bottom:12px">
-              <label style="font-size:9px;letter-spacing:2px;color:var(--text3);text-transform:uppercase;display:block;margin-bottom:6px">Non-Compliance Reason</label>
-              <textarea id="flag-reason" rows="2" class="search-input" placeholder="Describe the non-compliance issue..." style="width:100%;resize:vertical;margin-bottom:0"></textarea>
-            </div>
-            <div id="flag-error" style="color:var(--red);font-size:10px;margin-bottom:8px;min-height:14px"></div>
-            <button class="btn btn-sm" style="background:var(--red);color:#fff;border:none" data-action="submitFlag()">⚑ Submit Flag</button>
-          </div>
-        </div>
-      </div>
-      <div class="grid-2 mb-4">
-        <div class="panel">
-          <div class="panel-head"><div class="panel-title">Inspector Certification Approvals</div></div>
-          <div class="panel-body" id="inspector-cert-stats"><div style="color:var(--text3);font-size:10px;text-align:center;padding:20px">LOADING...</div></div>
-        </div>
-        <div class="panel">
-          <div class="panel-head"><div class="panel-title">Certification Status Overview</div></div>
-          <div class="panel-body"><div class="chart-wrap"><canvas id="chart-cert-status"></canvas></div></div>
-        </div>
-      </div>
       <div id="certs-container"><div class="empty-state">Loading certifications...</div></div>
-      <div class="panel" id="version-history-panel" style="display:none">
-        <div class="panel-head"><div class="panel-title">📋 QC Version History</div><span class="badge badge-blue" id="version-report-id"></span></div>
-        <div class="panel-body" id="version-history-body"></div>
-      </div>
     </div>
 
     <!-- IOT MONITOR -->
@@ -541,8 +418,8 @@ td.mono{font-family:var(--font-mono);font-size:10px}
       <div class="page-header">
         <div><div class="page-title">IoT Monitor</div><div class="page-sub">Live sensor feeds · Anomaly detection</div></div>
         <div class="header-actions">
-          <button class="btn btn-ghost btn-sm" id="iot-pause-btn" data-action="toggleIoT(this)">⏸ Pause Feed</button>
-          <button class="btn btn-primary btn-sm" data-action="loadIoTAnomalies()">↺ Refresh</button>
+          <button class="btn btn-ghost btn-sm" id="iot-pause-btn" onclick="toggleIoT(this)">⏸ Pause Feed</button>
+          <button class="btn btn-primary btn-sm" onclick="loadIoTAnomalies()">↺ Refresh</button>
         </div>
       </div>
       <div class="gauge-grid" id="iot-gauges">
@@ -571,7 +448,7 @@ td.mono{font-family:var(--font-mono);font-size:10px}
     <div class="page" id="page-equipment">
       <div class="page-header">
         <div><div class="page-title">Equipment Registry</div><div class="page-sub">Manufacturing assets · IoT assignments</div></div>
-        <div class="header-actions"><button class="btn btn-primary btn-sm" data-action="loadEquipment()">↺ Refresh</button></div>
+        <div class="header-actions"><button class="btn btn-primary btn-sm" onclick="loadEquipment()">↺ Refresh</button></div>
       </div>
       <div class="panel">
         <div class="panel-head"><div class="panel-title">All Equipment</div><span class="badge badge-blue" id="equipment-count">0 items</span></div>
@@ -583,7 +460,7 @@ td.mono{font-family:var(--font-mono);font-size:10px}
     <div class="page" id="page-audit">
       <div class="page-header">
         <div><div class="page-title">Audit Log</div><div class="page-sub">Complete action trail · Compliance</div></div>
-        <div class="header-actions"><button class="btn btn-primary btn-sm" data-action="loadAudit()">↺ Refresh</button></div>
+        <div class="header-actions"><button class="btn btn-primary btn-sm" onclick="loadAudit()">↺ Refresh</button></div>
       </div>
       <div class="search-bar">
         <input class="search-input" placeholder="Search audit log..." oninput="filterTable(this,'audit-tbody')"/>
@@ -598,10 +475,10 @@ td.mono{font-family:var(--font-mono);font-size:10px}
     <div class="page" id="page-users">
       <div class="page-header">
         <div><div class="page-title">Users</div><div class="page-sub">Roles · Access control</div></div>
-        <div class="header-actions"><button class="btn btn-primary btn-sm" data-action="loadUsers()">↺ Refresh</button></div>
+        <div class="header-actions"><button class="btn btn-primary btn-sm" onclick="loadUsers()">↺ Refresh</button></div>
       </div>
       <div class="panel">
-        <div class="tbl-wrap"><table><thead><tr><th>Emp ID</th><th>Name</th><th>Role(s)</th><th>Access Level</th><th>Department</th><th>Email</th><th>Status</th></tr></thead><tbody id="users-tbody"><tr class="loading-row"><td colspan="6">LOADING...</td></tr></tbody></table></div>
+        <div class="tbl-wrap"><table><thead><tr><th>Emp ID</th><th>Name</th><th>Role(s)</th><th>Department</th><th>Email</th><th>Status</th></tr></thead><tbody id="users-tbody"><tr class="loading-row"><td colspan="6">LOADING...</td></tr></tbody></table></div>
       </div>
     </div>
 
@@ -804,7 +681,7 @@ function showToast(msg, type = 'info') {
   const c = document.getElementById('toasts');
   const t = document.createElement('div');
   t.className = `toast ${type}`;
-  t.innerHTML = `<div class="toast-msg">${msg}</div><span class="toast-close" data-action="this.parentNode.remove()">✕</span>`;
+  t.innerHTML = `<div class="toast-msg">${msg}</div><span class="toast-close" onclick="this.parentNode.remove()">✕</span>`;
   c.appendChild(t);
   setTimeout(() => t?.remove(), 5000);
 }
@@ -950,20 +827,7 @@ function applyRBAC() {
     main.insertBefore(banner, main.firstChild);
   }
 
-  // 4. Show role-specific UI elements
-  const isProc  = role === 'PROCUREMENT_OFFICER';
-  const isQI    = role === 'QUALITY_INSPECTOR';
-  const isAudit = role === 'AUDITOR';
-
-  const btnOrder = document.getElementById('btn-create-order');
-  const btnQC    = document.getElementById('btn-create-qc');
-  const flagPanel= document.getElementById('auditor-flag-panel');
-
-  if (btnOrder)  btnOrder.style.display  = isProc  ? '' : 'none';
-  if (btnQC)     btnQC.style.display     = isQI    ? '' : 'none';
-  if (flagPanel) flagPanel.style.display = isAudit  ? '' : 'none';
-
-  // 5. Navigate to role default page
+  // 4. Navigate to role default page
   const defaultPage = config.pages.includes(config.default) ? config.default : config.pages[0];
   const navItem = document.querySelector(`.nav-item[data-page="${defaultPage}"]`);
   if (navItem) nav(navItem);
@@ -976,13 +840,6 @@ function initApp() {
 }
 
 // ── OVERVIEW ──────────────────────────────────────────────────────────────────
-// ── Chart drill-down navigation ──────────────────────────────────────────────
-function drillDown(page) {
-  const navItem = document.querySelector(`.nav-item[data-page="${page}"]`);
-  if (navItem) nav(navItem);
-  else showToast(`Cannot navigate to ${page} — check your role permissions.`, 'warning');
-}
-
 async function loadOverview() {
   try {
     // Use allSettled so one failing endpoint never blocks the rest
@@ -1086,7 +943,7 @@ async function loadOverview() {
         const completed = parseInt(s.completed_orders) || 0;
         const rate = total ? Math.round((completed/total)*100) : 0;
         const color = rate>=90?'var(--green)':rate>=70?'var(--cyan)':rate>=50?'var(--amber)':'var(--red)';
-        return `<div class="meter-row" style="cursor:pointer" data-action="drillDown('suppliers')" title="Drill down to Suppliers">
+        return `<div class="meter-row">
           <div class="meter-label">${s.business_name}</div>
           <div class="meter-bar-wrap"><div class="meter-bar" style="width:${rate}%;background:${color}"></div></div>
           <div class="meter-val" style="color:${color}">${rate}%</div>
@@ -1168,7 +1025,7 @@ async function loadSuppliers(accreditation = '') {
         const comp  = parseInt(s.completed_orders)||0;
         const rate  = total ? Math.round((comp/total)*100) : 0;
         const color = rate>=90?'var(--green)':rate>=70?'var(--cyan)':rate>=50?'var(--amber)':'var(--red)';
-        return `<div class="meter-row" style="cursor:pointer" data-action="drillDown('suppliers')" title="Drill down to Suppliers">
+        return `<div class="meter-row">
           <div class="meter-label">${s.business_name}</div>
           <div class="meter-bar-wrap"><div class="meter-bar" style="width:${rate}%;background:${color}"></div></div>
           <div class="meter-val" style="color:${color}">${rate}%</div>
@@ -1242,7 +1099,7 @@ async function loadQC(delivered_item_id = '', report_type = '', status = '') {
     });
 
     tbody.innerHTML = reports.length
-      ? reports.map(r => `<tr style="cursor:pointer" data-action="drillDown('certifications')">
+      ? reports.map(r => `<tr>
           <td class="mono primary">${shortId(r.qc_report_id)}</td>
           <td class="mono text-muted">${shortId(r.delivered_item_id)}</td>
           <td><span class="badge badge-blue">${r.report_type?.replace(/_/g,' ')}</span></td>
@@ -1250,23 +1107,6 @@ async function loadQC(delivered_item_id = '', report_type = '', status = '') {
           <td class="text-muted">${fmtDate(r.created_at)}</td>
         </tr>`).join('')
       : '<tr><td colspan="5" class="empty-state">No QC reports found</td></tr>';
-
-    // ── 12-month failure rate trend (simulated from available data) ────────
-    const months = ['Aug','Sep','Oct','Nov','Dec','Jan','Feb','Mar','Apr','May','Jun','Jul'];
-    const passData = [0, reports.filter(r=>r.current_status==='APPROVED').length, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    const failData = [0, reports.filter(r=>r.current_status==='REJECTED').length, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0];
-    makeChart('chart-qc-trend-12m', {
-      type:'line',
-      data:{ labels: months, datasets:[
-        { label:'Pass', data: passData, borderColor:'#10b981', backgroundColor:'rgba(16,185,129,.1)', borderWidth:1.5, pointRadius:2, fill:true, tension:.4 },
-        { label:'Fail', data: failData, borderColor:'#ef4444', backgroundColor:'rgba(239,68,68,.1)',  borderWidth:1.5, pointRadius:2, fill:true, tension:.4 },
-      ]},
-      options:{ responsive:true, maintainAspectRatio:false, animation:false,
-        plugins:{ legend:{ display:true, labels:{ color:'#8fa3bf', font:{family:'Space Mono',size:9}, boxWidth:10 } } },
-        scales:{ x:{grid:{color:'rgba(255,255,255,.05)',drawTicks:false},ticks:{color:'rgba(255,255,255,.35)',font:{family:'Space Mono',size:9}}},
-                 y:{grid:{color:'rgba(255,255,255,.05)',drawTicks:false},ticks:{color:'rgba(255,255,255,.35)',font:{family:'Space Mono',size:9}}} } }
-    });
-
   } catch (e) {
     tbody.innerHTML = `<tr><td colspan="5" class="empty-state">${e.message}</td></tr>`;
   }
@@ -1275,101 +1115,47 @@ async function loadQC(delivered_item_id = '', report_type = '', status = '') {
 // ── CERTIFICATIONS ────────────────────────────────────────────────────────────
 async function loadCertifications() {
   const container = document.getElementById('certs-container');
-  if (container) container.innerHTML = '<div class="empty-state">Loading...</div>';
+  container.innerHTML = '<div class="empty-state">Loading...</div>';
   try {
+    // Load QC reports to show certification status per delivered item
     const qc = await apiFetch('/api/qc-reports?limit=100');
-    const reports = qc.data || [];
+    const certIds = [...new Set((qc.data||[]).map(r => r.delivered_item_id).filter(Boolean))];
 
-    // Inspector approval stats
-    const inspEl = document.getElementById('inspector-cert-stats');
-    if (inspEl) {
-      const approved = reports.filter(r=>r.current_status==='APPROVED').length;
-      const pending  = reports.filter(r=>r.current_status==='SUBMITTED'||r.current_status==='DRAFT').length;
-      const rejected = reports.filter(r=>r.current_status==='REJECTED').length;
-      inspEl.innerHTML = `
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px">
-          <div style="text-align:center;padding:12px;background:var(--bg3);border-radius:var(--radius)">
-            <div style="font-family:var(--font-head);font-size:28px;font-weight:700;color:var(--green)">${approved}</div>
-            <div style="font-size:9px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-top:4px">Approved</div>
-          </div>
-          <div style="text-align:center;padding:12px;background:var(--bg3);border-radius:var(--radius)">
-            <div style="font-family:var(--font-head);font-size:28px;font-weight:700;color:var(--amber)">${pending}</div>
-            <div style="font-size:9px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-top:4px">Pending</div>
-          </div>
-          <div style="text-align:center;padding:12px;background:var(--bg3);border-radius:var(--radius)">
-            <div style="font-family:var(--font-head);font-size:28px;font-weight:700;color:var(--red)">${rejected}</div>
-            <div style="font-size:9px;color:var(--text3);letter-spacing:1px;text-transform:uppercase;margin-top:4px">Rejected</div>
-          </div>
-        </div>
-        <div style="font-size:10px;color:var(--text3)">Total QC reports handled: ${reports.length}</div>`;
-    }
-
-    // Cert status donut chart
-    const byStatus = {};
-    reports.forEach(r => { byStatus[r.current_status] = (byStatus[r.current_status]||0)+1; });
-    makeChart('chart-cert-status', {
-      type:'doughnut',
-      data:{ labels:Object.keys(byStatus), datasets:[{ data:Object.values(byStatus), backgroundColor:['#10b981','#06b6d4','#4d6480','#ef4444'], borderWidth:0, hoverOffset:4 }] },
-      options:{ responsive:true, maintainAspectRatio:false, cutout:'65%',
-        plugins:{ legend:{ display:true, position:'right', labels:{ color:'#8fa3bf', font:{family:'Space Mono',size:9}, boxWidth:10 } } } }
-    });
-
-    // Certification registry list — clickable for version history
-    if (container) {
-      container.innerHTML = `
-        <div class="panel panel-accent">
-          <div class="panel-head">
-            <div class="panel-title">🔒 Certification Registry</div>
-            <span class="badge badge-green">${reports.filter(r=>r.current_status==='APPROVED').length} approved</span>
-          </div>
-          <div class="panel-body">
-            <div class="alert-strip info">ℹ Once is_immutable = TRUE, records cannot be modified. Click any row to view its version history.</div>
-            ${reports.slice(0,15).map(r => `
-              <div class="cert-row" style="cursor:pointer" data-action="showVersionHistory('${r.qc_report_id}','${r.mongo_doc_ref||''}')">
-                <div style="font-size:16px">${r.current_status==='APPROVED'?'🔒':'📄'}</div>
-                <div class="cert-info">
-                  <div class="cert-id">${shortId(r.qc_report_id)} — ${(r.report_type||'').replace(/_/g,' ')}</div>
-                  <div class="cert-part">Delivered Item: ${shortId(r.delivered_item_id)}</div>
-                </div>
-                <div style="text-align:right">
-                  ${statusBadge(r.current_status)}
-                  <div class="text-muted" style="font-size:10px;margin-top:4px">${fmtDate(r.created_at)}</div>
-                </div>
-              </div>`).join('')}
-          </div>
-        </div>`;
-    }
-  } catch (e) {
-    if (container) container.innerHTML = `<div class="empty-state">${e.message}</div>`;
-  }
-}
-
-async function showVersionHistory(qcReportId, mongoRef) {
-  const panel = document.getElementById('version-history-panel');
-  const body  = document.getElementById('version-history-body');
-  const label = document.getElementById('version-report-id');
-  if (!panel) return;
-  panel.style.display = 'block';
-  if (label) label.textContent = shortId(qcReportId);
-  if (body)  body.innerHTML = '<div style="color:var(--text3);font-size:10px;padding:12px">Loading...</div>';
-  try {
-    const data = await apiFetch(`/api/qc-reports/${qcReportId}`);
-    const versions = data.data?.document?.versions || [];
-    if (!versions.length) {
-      body.innerHTML = `<div class="empty-state">Version history is stored in MongoDB (${mongoRef || 'see Compass'}).<br>Import MongoDB seed data to view full version history here.</div>`;
+    if (!certIds.length) {
+      container.innerHTML = '<div class="empty-state">No certifications found</div>';
       return;
     }
-    body.innerHTML = versions.map(v => `
-      <div class="tl-item">
-        <div class="tl-dot ${v.status==='APPROVED'?'green':v.status==='REJECTED'?'red':'blue'}"></div>
-        <div class="tl-content">
-          <div class="tl-title">Version ${v.versionNo} — ${v.status}</div>
-          <div class="tl-sub">${v.summary||'—'}</div>
+
+    // Fetch each cert
+    const certs = await Promise.all(
+      certIds.slice(0,5).map(id => apiFetch(`/api/qc-reports?delivered_item_id=${id}`).catch(() => null))
+    );
+
+    container.innerHTML = `
+      <div class="panel panel-accent">
+        <div class="panel-head">
+          <div class="panel-title">🔒 Certification Registry</div>
+          <span class="badge badge-green">${certIds.length} items certified</span>
         </div>
-        <div class="tl-time">${fmtDate(v.createdAt)}</div>
-      </div>`).join('');
+        <div class="panel-body">
+          <div class="alert-strip info">ℹ Certifications approved via QC inspection flow. Once is_immutable = TRUE in the database, records cannot be modified.</div>
+          ${(qc.data||[]).slice(0,10).map(r => `
+            <div class="cert-row">
+              <div style="font-size:16px">${r.current_status==='APPROVED'?'🔒':'📄'}</div>
+              <div class="cert-info">
+                <div class="cert-id">${shortId(r.qc_report_id)} — ${r.report_type?.replace(/_/g,' ')}</div>
+                <div class="cert-part">Item: ${shortId(r.delivered_item_id)} · Serial: ${r.serial_number||'N/A'}</div>
+              </div>
+              <div style="text-align:right">
+                ${statusBadge(r.current_status)}
+                <div class="text-muted" style="font-size:10px;margin-top:4px">${fmtDate(r.created_at)}</div>
+              </div>
+            </div>
+          `).join('')}
+        </div>
+      </div>`;
   } catch (e) {
-    body.innerHTML = `<div class="empty-state">Version history in MongoDB ref: ${mongoRef||'not linked'}</div>`;
+    container.innerHTML = `<div class="empty-state">${e.message}</div>`;
   }
 }
 
@@ -1382,41 +1168,37 @@ async function loadIoT() {
 
 async function loadIoTAnomalies() {
   const tbody = document.getElementById('anomaly-tbody');
-  if (tbody) tbody.innerHTML = '<tr class="loading-row"><td colspan="6">LOADING...</td></tr>';
+  tbody.innerHTML = '<tr class="loading-row"><td colspan="6">LOADING...</td></tr>';
   try {
     const data = await apiFetch('/api/dashboard/iot-anomalies');
-    const countEl = document.getElementById('anomaly-count');
-    const kpiEl   = document.getElementById('kpi-anomalies');
-    const vibEl   = document.getElementById('vib-badge');
-    if (countEl) countEl.textContent = data.count || 0;
-    if (kpiEl)   kpiEl.textContent   = data.count || 0;
+    document.getElementById('anomaly-count').textContent = data.count || 0;
+    document.getElementById('kpi-anomalies').textContent = data.count || 0;
+
     if (data.data?.length) {
-      const gTemp    = document.getElementById('g-temp');
-      const gVib     = document.getElementById('g-vib');
-      const gSpindle = document.getElementById('g-spindle');
-      const gChamber = document.getElementById('g-chamber');
-      if (gTemp)    gTemp.textContent    = data.data[0]?.temperature_c?.toFixed(1) || '—';
-      if (gVib)     gVib.textContent     = data.data[0]?.vibration_mm_s?.toFixed(2) || '—';
-      if (gSpindle) gSpindle.textContent = data.data[0]?.rawReadings?.spindleLoad_pct?.toFixed(1) || '—';
-      if (gChamber) gChamber.textContent = (data.data.find(d=>d.equipmentName?.includes('Climate'))?.temperature_c?.toFixed(1)) || '—';
-      if (vibEl)    vibEl.textContent    = data.count > 0 ? '⚠ ANOMALIES DETECTED' : 'NORMAL';
+      document.getElementById('g-temp').textContent    = data.data[0]?.temperature_c?.toFixed(1) || '—';
+      document.getElementById('g-vib').textContent     = data.data[0]?.vibration_mm_s?.toFixed(2) || '—';
+      document.getElementById('g-spindle').textContent = data.data[0]?.rawReadings?.spindleLoad_pct?.toFixed(1) || '—';
+      document.getElementById('g-chamber').textContent = data.data.find(d=>d.equipmentName?.includes('Climate'))?.temperature_c?.toFixed(1) || '—';
+      document.getElementById('vib-badge').textContent = data.count > 0 ? '⚠ ANOMALIES DETECTED' : 'NORMAL';
     }
-    if (tbody) tbody.innerHTML = data.data?.length
+
+    tbody.innerHTML = data.data?.length
       ? data.data.map(r => `<tr>
           <td class="mono text-muted">${fmtDateTime(r.timestamp)}</td>
           <td class="mono">${shortId(r.deviceId)}</td>
           <td>${r.equipmentName || r.assignedToType || '—'}</td>
           <td class="text-red">Temp: ${r.temperature_c||'—'}°C · Vib: ${r.vibration_mm_s||'—'} mm/s</td>
-          <td class="text-muted">${r.anomalyDetail || (r.rawReadings?.alarmCodes||[]).join(', ') || '—'}</td>
+          <td class="text-muted">${r.anomalyDetail || r.rawReadings?.alarmCodes?.join(', ') || '—'}</td>
           <td><span class="badge badge-red">ANOMALY</span></td>
         </tr>`).join('')
       : '<tr><td colspan="6" class="empty-state">No anomalies detected</td></tr>';
   } catch (e) {
-    if (tbody) tbody.innerHTML = `<tr><td colspan="6" class="empty-state">${e.message}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" class="empty-state">${e.message}</td></tr>`;
   }
 }
 
 function initIoTCharts() {
+  // Clear arrays on every init to prevent infinite growth on re-visits
   iotLabels.length = 0; iotTempData.length = 0; iotVibData.length = 0;
   for (let i = 9; i >= 0; i--) {
     const d = new Date(); d.setMinutes(d.getMinutes() - i);
@@ -1425,20 +1207,18 @@ function initIoTCharts() {
   iotTempData.push(42.3,42.8,43.1,43.4,43.8,43.5,43.2,43.6,43.8,43.9);
   iotVibData.push(1.2,1.5,1.8,2.2,2.9,2.5,2.1,2.4,2.7,2.9);
 
+  destroyChart('chart-iot-temp');
   iotTempChart = makeChart('chart-iot-temp', {
     type:'line',
     data:{ labels:[...iotLabels], datasets:[{ label:'°C', data:[...iotTempData], borderColor:'#f59e0b', backgroundColor:'rgba(245,158,11,.1)', borderWidth:1.5, pointRadius:2, fill:true, tension:.4 }] },
-    options:{ responsive:true, maintainAspectRatio:false, animation:false, plugins:{legend:{display:false}},
-      scales:{ x:{grid:{color:'rgba(255,255,255,.05)',drawTicks:false},ticks:{color:'rgba(255,255,255,.35)',font:{family:'Space Mono',size:9}}},
-               y:{grid:{color:'rgba(255,255,255,.05)',drawTicks:false},ticks:{color:'rgba(255,255,255,.35)',font:{family:'Space Mono',size:9}},min:38,max:55} } }
+    options:{ ...chartBase, animation:false, scales:{ x:{grid:gridStyle,ticks:axisTick}, y:{grid:gridStyle,ticks:axisTick,min:38,max:55} } }
   });
 
+  destroyChart('chart-iot-vib');
   iotVibChart = makeChart('chart-iot-vib', {
     type:'line',
     data:{ labels:[...iotLabels], datasets:[{ label:'mm/s', data:[...iotVibData], borderColor:'#ef4444', backgroundColor:'rgba(239,68,68,.1)', borderWidth:1.5, pointRadius:2, fill:true, tension:.4 }] },
-    options:{ responsive:true, maintainAspectRatio:false, animation:false, plugins:{legend:{display:false}},
-      scales:{ x:{grid:{color:'rgba(255,255,255,.05)',drawTicks:false},ticks:{color:'rgba(255,255,255,.35)',font:{family:'Space Mono',size:9}}},
-               y:{grid:{color:'rgba(255,255,255,.05)',drawTicks:false},ticks:{color:'rgba(255,255,255,.35)',font:{family:'Space Mono',size:9}},min:0,max:4} } }
+    options:{ ...chartBase, animation:false, scales:{ x:{grid:gridStyle,ticks:axisTick}, y:{grid:gridStyle,ticks:axisTick,min:0,max:4} } }
   });
 }
 
@@ -1449,24 +1229,26 @@ function startIoTSimulation() {
     const t = new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit'});
     const newTemp = parseFloat((41+Math.random()*4).toFixed(1));
     const newVib  = parseFloat((1+Math.random()*2.5).toFixed(2));
-    iotLabels.push(t);   if(iotLabels.length>20)   iotLabels.shift();
+
+    iotLabels.push(t); if(iotLabels.length>20) iotLabels.shift();
     iotTempData.push(newTemp); if(iotTempData.length>20) iotTempData.shift();
-    iotVibData.push(newVib);   if(iotVibData.length>20)  iotVibData.shift();
+    iotVibData.push(newVib);   if(iotVibData.length>20) iotVibData.shift();
+
     if(iotTempChart){ iotTempChart.data.labels=[...iotLabels]; iotTempChart.data.datasets[0].data=[...iotTempData]; iotTempChart.update('none'); }
     if(iotVibChart) { iotVibChart.data.labels=[...iotLabels];  iotVibChart.data.datasets[0].data=[...iotVibData];  iotVibChart.update('none'); }
-    const gTemp = document.getElementById('g-temp');
-    const gVib  = document.getElementById('g-vib');
-    const gSpindle = document.getElementById('g-spindle');
-    if (gTemp)    gTemp.textContent    = newTemp.toFixed(1);
-    if (gVib)     gVib.textContent     = newVib.toFixed(2);
-    if (gSpindle) gSpindle.textContent = (75+Math.random()*10).toFixed(1);
+
+    document.getElementById('g-temp').textContent    = newTemp.toFixed(1);
+    document.getElementById('g-vib').textContent     = newVib.toFixed(2);
+    document.getElementById('g-spindle').textContent = (75+Math.random()*10).toFixed(1);
+
     if (newVib > 2.5) showToast(`⚠ IoT: Vibration spike ${newVib} mm/s`, 'warning');
   }, 3000);
 }
 
 function toggleIoT(btn) {
   iotRunning = !iotRunning;
-  if (btn) btn.textContent = iotRunning ? '⏸ Pause Feed' : '▶ Resume Feed';
+  btn.textContent = iotRunning ? '⏸ Pause Feed' : '▶ Resume Feed';
+  // Also reset the pause button label on the DOM element by id
   const pauseBtn = document.getElementById('iot-pause-btn');
   if (pauseBtn) pauseBtn.textContent = iotRunning ? '⏸ Pause Feed' : '▶ Resume Feed';
 }
@@ -1474,12 +1256,11 @@ function toggleIoT(btn) {
 // ── EQUIPMENT ─────────────────────────────────────────────────────────────────
 async function loadEquipment() {
   const tbody = document.getElementById('equipment-tbody');
-  if (tbody) tbody.innerHTML = '<tr class="loading-row"><td colspan="8">LOADING...</td></tr>';
+  tbody.innerHTML = '<tr class="loading-row"><td colspan="8">LOADING...</td></tr>';
   try {
     const data = await apiFetch('/api/equipment');
-    const countEl = document.getElementById('equipment-count');
-    if (countEl) countEl.textContent = `${data.data?.length || 0} items`;
-    if (tbody) tbody.innerHTML = data.data?.length
+    document.getElementById('equipment-count').textContent = `${data.data?.length || 0} items`;
+    tbody.innerHTML = data.data?.length
       ? data.data.map(e => `<tr>
           <td class="mono primary">${shortId(e.equipment_id)}</td>
           <td>${e.equipment_name}</td>
@@ -1492,55 +1273,54 @@ async function loadEquipment() {
         </tr>`).join('')
       : '<tr><td colspan="8" class="empty-state">No equipment found</td></tr>';
   } catch (e) {
-    if (tbody) tbody.innerHTML = `<tr><td colspan="8" class="empty-state">${e.message}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="8" class="empty-state">${e.message}</td></tr>`;
   }
 }
 
 // ── AUDIT LOG ─────────────────────────────────────────────────────────────────
 async function loadAudit(action_type = '') {
   const tbody = document.getElementById('audit-tbody');
-  if (tbody) tbody.innerHTML = '<tr class="loading-row"><td colspan="6">LOADING...</td></tr>';
+  tbody.innerHTML = '<tr class="loading-row"><td colspan="6">LOADING...</td></tr>';
   try {
     const url = `/api/audit-logs?limit=50${action_type ? '&action_type='+action_type : ''}`;
     const data = await apiFetch(url);
-    if (tbody) tbody.innerHTML = data.data?.length
+    tbody.innerHTML = data.data?.length
       ? data.data.map(a => `<tr>
           <td class="mono text-muted">${fmtDateTime(a.created_at)}</td>
           <td>${a.full_name || shortId(a.emp_id)}</td>
           <td>${statusBadge(a.action_type)}</td>
           <td class="text-muted">${a.entity_type}</td>
-          <td class="mono text-muted">${(a.entity_id||'').substring(0,20) || '—'}</td>
+          <td class="mono text-muted">${a.entity_id?.substring(0,20) || '—'}</td>
           <td>${statusBadge(a.outcome)}</td>
         </tr>`).join('')
       : '<tr><td colspan="6" class="empty-state">No audit records found</td></tr>';
   } catch (e) {
-    if (tbody) tbody.innerHTML = `<tr><td colspan="6" class="empty-state">${e.message}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" class="empty-state">${e.message}</td></tr>`;
   }
 }
 
 // ── USERS ─────────────────────────────────────────────────────────────────────
 async function loadUsers() {
   const tbody = document.getElementById('users-tbody');
-  if (tbody) tbody.innerHTML = '<tr class="loading-row"><td colspan="7">LOADING...</td></tr>';
+  tbody.innerHTML = '<tr class="loading-row"><td colspan="6">LOADING...</td></tr>';
   try {
     const data = await apiFetch('/api/users');
-    const roleMap = {PROCUREMENT_OFFICER:'badge-blue',QUALITY_INSPECTOR:'badge-purple',SUPPLY_CHAIN_MANAGER:'badge-cyan',EQUIPMENT_ENGINEER:'badge-amber',AUDITOR:'badge-gray'};
-    if (tbody) tbody.innerHTML = data.data?.length
+    tbody.innerHTML = data.data?.length
       ? data.data.map(u => {
-          const roles = (Array.isArray(u.roles) ? u.roles : (u.roles||'').replace(/^{|}$/g,'').split(',')).filter(Boolean);
+          const roles = (Array.isArray(u.roles) ? u.roles : (u.roles||'').replace(/^{|}$/g,'').split(',').filter(Boolean));
+          const roleMap = {PROCUREMENT_OFFICER:'badge-blue',QUALITY_INSPECTOR:'badge-purple',SUPPLY_CHAIN_MANAGER:'badge-cyan',EQUIPMENT_ENGINEER:'badge-amber',AUDITOR:'badge-gray'};
           return `<tr>
             <td class="mono primary">${shortId(u.emp_id)}</td>
             <td>${u.full_name}</td>
             <td>${roles.map(r=>`<span class="badge ${roleMap[r]||'badge-gray'}">${r.replace(/_/g,' ')}</span>`).join(' ')}</td>
-            <td><span class="badge badge-gray">${u.access_level||'READ'}</span></td>
             <td>${u.department || '—'}</td>
             <td class="mono text-muted">${u.email}</td>
             <td>${u.is_active ? statusBadge('ACTIVE') : statusBadge('INACTIVE')}</td>
           </tr>`;
         }).join('')
-      : '<tr><td colspan="7" class="empty-state">No users found</td></tr>';
+      : '<tr><td colspan="6" class="empty-state">No users found</td></tr>';
   } catch (e) {
-    if (tbody) tbody.innerHTML = `<tr><td colspan="6" class="empty-state">${e.message}</td></tr>`;
+    tbody.innerHTML = `<tr><td colspan="6" class="empty-state">${e.message}</td></tr>`;
   }
 }
 
@@ -1554,6 +1334,7 @@ async function loadAlerts() {
     ]);
     const anomalies = anomaliesR.status === 'fulfilled' ? anomaliesR.value : {data:[]};
     const orders    = ordersR.status    === 'fulfilled' ? ordersR.value    : {data:[]};
+
     const alerts = [];
     (anomalies.data||[]).forEach(a => {
       alerts.push({ type:'danger', msg:`🔴 IoT Anomaly — ${a.equipmentName||'Device'} · ${a.anomalyDetail||'Threshold exceeded'} · ${fmtDateTime(a.timestamp)}` });
@@ -1561,195 +1342,28 @@ async function loadAlerts() {
     (orders.data||[]).forEach(o => {
       const eta  = o.desired_delivery_date ? new Date(o.desired_delivery_date) : null;
       const late = eta && eta < new Date();
-      if (late) alerts.push({ type:'warn', msg:`⚠ Order Delayed — ${o.supplier_name||'Supplier'} · ETA was ${fmtDate(o.desired_delivery_date)}` });
+      if (late) alerts.push({ type:'warn', msg:`⚠ Order Delayed — ${o.supplier_name} · ETA was ${fmtDate(o.desired_delivery_date)}` });
     });
-    const countEl = document.getElementById('alert-count');
-    if (countEl) countEl.textContent = alerts.length;
-    if (container) container.innerHTML = alerts.length
+
+    document.getElementById('alert-count').textContent = alerts.length;
+    container.innerHTML = alerts.length
       ? alerts.map(a => `<div class="alert-strip ${a.type}">${a.msg}</div>`).join('')
       : '<div class="empty-state">No active alerts</div>';
   } catch (e) {
-    if (container) container.innerHTML = `<div class="empty-state">${e.message}</div>`;
+    container.innerHTML = `<div class="empty-state">${e.message}</div>`;
   }
 }
 
-function exportCSV(page) { showToast('Export — connect /api endpoints with CSV serialisation for production use.', 'info'); }
+function exportCSV(page) { showToast('Export feature — connect to /api endpoints with ?format=csv', 'info'); }
 
-// ── CREATE ORDER (Procurement Officer) ────────────────────────────────────────
-function showCreateOrder() {
-  const form = document.getElementById('create-order-form');
-  const btn  = document.getElementById('btn-create-order');
-  if (form) form.style.display = 'block';
-  if (btn)  btn.style.display  = 'none';
-  const today  = new Date().toISOString().split('T')[0];
-  const future = new Date(Date.now() + 30*24*60*60*1000).toISOString().split('T')[0];
-  const od = document.getElementById('co-order-date');
-  const dd = document.getElementById('co-delivery-date');
-  if (od) od.value = today;
-  if (dd) dd.value = future;
-}
-function hideCreateOrder() {
-  const form = document.getElementById('create-order-form');
-  const btn  = document.getElementById('btn-create-order');
-  const err  = document.getElementById('create-order-error');
-  if (form) form.style.display = 'none';
-  if (btn)  btn.style.display  = '';
-  if (err)  err.textContent    = '';
-}
-async function submitCreateOrder() {
-  const supplierId   = document.getElementById('co-supplier')?.value;
-  const orderDate    = document.getElementById('co-order-date')?.value;
-  const deliveryDate = document.getElementById('co-delivery-date')?.value;
-  const errEl        = document.getElementById('create-order-error');
-  if (errEl) errEl.textContent = '';
-  if (!supplierId)   { if(errEl) errEl.textContent = 'Please select a supplier.'; return; }
-  if (!orderDate)    { if(errEl) errEl.textContent = 'Please enter an order date.'; return; }
-  if (!deliveryDate) { if(errEl) errEl.textContent = 'Please enter a desired delivery date.'; return; }
-  // API requires at least one order line — use a default part for the selected supplier
-  const supplierPartMap = {
-    'a1000000-0000-0000-0000-000000000001': 'd1000000-0000-0000-0000-000000000001',
-    'a1000000-0000-0000-0000-000000000002': 'd1000000-0000-0000-0000-000000000002',
-    'a1000000-0000-0000-0000-000000000003': 'd1000000-0000-0000-0000-000000000003',
-    'a1000000-0000-0000-0000-000000000004': 'd1000000-0000-0000-0000-000000000004',
-  };
-  const defaultLine = [{ supplier_part_id: supplierPartMap[supplierId] || 'd1000000-0000-0000-0000-000000000001', quantity: 1 }];
-  try {
-    const res = await apiFetch('/api/orders', {
-      method: 'POST',
-      body: JSON.stringify({ supplier_id: supplierId, order_date: orderDate, desired_delivery_date: deliveryDate, lines: defaultLine })
-    });
-    if (res.success) {
-      showToast('Purchase order created successfully.', 'success');
-      hideCreateOrder();
-      loadOrders();
-    } else {
-      if (errEl) errEl.textContent = res.message || 'Failed to create order.';
-    }
-  } catch (e) {
-    if (errEl) errEl.textContent = e.message;
-  }
-}
-
-// ── CREATE QC REPORT (Quality Inspector) ──────────────────────────────────────
-function showCreateQC() {
-  const form = document.getElementById('create-qc-form');
-  const btn  = document.getElementById('btn-create-qc');
-  if (form) form.style.display = 'block';
-  if (btn)  btn.style.display  = 'none';
-}
-function hideCreateQC() {
-  const form = document.getElementById('create-qc-form');
-  const btn  = document.getElementById('btn-create-qc');
-  const err  = document.getElementById('create-qc-error');
-  if (form) form.style.display = 'none';
-  if (btn)  btn.style.display  = '';
-  if (err)  err.textContent    = '';
-}
-async function submitCreateQC() {
-  const reportType      = document.getElementById('qc-type')?.value;
-  const deliveredItemId = document.getElementById('qc-item-id')?.value.trim();
-  const notes           = document.getElementById('qc-notes')?.value.trim();
-  const status          = document.getElementById('qc-status')?.value;
-  const errEl           = document.getElementById('create-qc-error');
-  if (errEl) errEl.textContent = '';
-  if (!deliveredItemId) { if(errEl) errEl.textContent = 'Delivered item ID is required.'; return; }
-  const today = new Date().toISOString().split('T')[0];
-  // Build a minimal results object matching the report type
-  const resultsMap = {
-    VISUAL_INSPECTION:      { visualInspection: notes || 'Inspection completed', verdict: status === 'SUBMITTED' ? 'Pass' : 'Pending' },
-    DIMENSIONAL_CHECK:      { dimensionalTolerance: { result: 'Pending', measurements: [], notes: notes || '' } },
-    NON_DESTRUCTIVE_TESTING:{ nonDestructiveTesting: { type: 'Ultrasonic', result: 'Pending', findings: [], comments: notes || '' } },
-    ENVIRONMENTAL_STRESS:   { environmentalTest: { result: 'Pending', notes: notes || '' } },
-  };
-  try {
-    const res = await apiFetch('/api/qc-reports', {
-      method: 'POST',
-      body: JSON.stringify({
-        delivered_item_id: deliveredItemId,
-        report_type: reportType,
-        results: resultsMap[reportType] || { notes: notes || '' },
-        inspectionDate: today,
-        notes
-      })
-    });
-    if (res.success) {
-      showToast('QC report created successfully.', 'success');
-      hideCreateQC();
-      loadQC();
-    } else {
-      if (errEl) errEl.textContent = res.message || 'Failed to create QC report.';
-    }
-  } catch (e) {
-    if (errEl) errEl.textContent = e.message;
-  }
-}
-
-// ── FLAG NON-COMPLIANCE (Auditor) ─────────────────────────────────────────────
-async function submitFlag() {
-  const entityType = document.getElementById('flag-entity-type')?.value;
-  const entityId   = document.getElementById('flag-entity-id')?.value.trim();
-  const reason     = document.getElementById('flag-reason')?.value.trim();
-  const errEl      = document.getElementById('flag-error');
-  if (errEl) errEl.textContent = '';
-  if (!entityId) { if(errEl) errEl.textContent = 'Entity ID is required.'; return; }
-  if (!reason)   { if(errEl) errEl.textContent = 'Please provide a reason.'; return; }
-  showToast('Non-compliance flag recorded for ' + entityType + '.', 'warning');
-  if (document.getElementById('flag-entity-id')) document.getElementById('flag-entity-id').value = '';
-  if (document.getElementById('flag-reason'))    document.getElementById('flag-reason').value    = '';
-  if (errEl) errEl.textContent = '';
-}
-
-
-// ── SAFE EVENT BINDING (replaces all onclick attributes) ─────────────────────
-document.addEventListener('DOMContentLoaded', function() {
-  document.body.addEventListener('click', function(e) {
-    var el = e.target.closest('[data-action]');
-    if (!el) return;
-    var action = el.getAttribute('data-action');
-    if (!action) return;
-    try {
-      var match = action.match(/^(\w+)\((.*)\)$/);
-      if (!match) return;
-      var fnName  = match[1];
-      var argsStr = match[2].trim();
-      var fn = window[fnName];
-      if (typeof fn !== 'function') { console.error('Action not found:', fnName); return; }
-
-      // Special case: nav(this) passes the element itself
-      if (fnName === 'nav' && argsStr === 'this') { fn(el); return; }
-      // Special case: toggleIoT(this) passes the element itself
-      if (argsStr === 'this') { fn(el); return; }
-
-      if (!argsStr) {
-        fn();
-      } else {
-        var args = argsStr.split(',').map(function(a) {
-          a = a.trim();
-          if (a === 'true')  return true;
-          if (a === 'false') return false;
-          if ((a[0]==="'" && a[a.length-1]==="'") || (a[0]==='"' && a[a.length-1]==='"')) return a.slice(1,-1);
-          return a;
-        });
-        fn.apply(null, args);
-      }
-    } catch(err) { console.error('Action error:', action, err); }
-  });
+// ── BOOT ──────────────────────────────────────────────────────────────────────
+document.addEventListener('DOMContentLoaded', () => {
+  setInterval(() => {
+    document.getElementById('clock').textContent =
+      new Date().toLocaleTimeString('en-GB',{hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  }, 1000);
+  tryAutoLogin();
 });
-
-// Expose all functions to window scope for data-action binding
-window.doLogin=doLogin; window.doLogout=doLogout; window.nav=nav;
-window.loadOverview=loadOverview; window.loadShipments=loadShipments;
-window.loadOrders=loadOrders; window.loadSuppliers=loadSuppliers;
-window.loadQC=loadQC; window.loadCertifications=loadCertifications;
-window.loadIoT=loadIoT; window.loadIoTAnomalies=loadIoTAnomalies;
-window.loadEquipment=loadEquipment; window.loadAudit=loadAudit;
-window.loadUsers=loadUsers; window.loadAlerts=loadAlerts;
-window.toggleIoT=toggleIoT; window.filterTable=filterTable;
-window.exportCSV=exportCSV; window.drillDown=drillDown;
-window.showVersionHistory=showVersionHistory;
-window.showCreateOrder=showCreateOrder; window.hideCreateOrder=hideCreateOrder; window.submitCreateOrder=submitCreateOrder;
-window.showCreateQC=showCreateQC; window.hideCreateQC=hideCreateQC; window.submitCreateQC=submitCreateQC;
-window.submitFlag=submitFlag;
 </script>
 </body>
 </html>
