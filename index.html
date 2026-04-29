@@ -786,7 +786,13 @@ async function apiFetch(path, opts = {}) {
   const requestInit = { method: opts.method || 'GET', headers };
   if (opts.body) requestInit.body = opts.body;
 
+  // Debug: log what we're sending
+  console.log('[apiFetch]', opts.method || 'GET', API + path);
+  console.log('[apiFetch] token present:', !!authToken, 'length:', authToken?.length);
+  console.log('[apiFetch] auth header:', headers.get('Authorization')?.substring(0, 20) + '...');
+
   const res = await fetch(API + path, requestInit);
+  console.log('[apiFetch] response status:', res.status);
 
   if (res.status === 401) {
     token = null;
@@ -1717,8 +1723,16 @@ async function submitCreateQC() {
   };
   const resultsPayload = resultsMap[reportType] || { notes: notes || 'Pending' };
   try {
-    const res = await apiFetch('/api/qc-reports', {
+    // Use raw fetch to bypass any apiFetch issues — explicit header construction
+    const authToken = token || lsGet('aeronet_token');
+    console.log('[submitCreateQC] authToken present:', !!authToken, 'first20:', authToken?.substring(0,20));
+
+    const rawRes = await fetch(API + '/api/qc-reports', {
       method: 'POST',
+      headers: {
+        'Content-Type':  'application/json',
+        'Authorization': 'Bearer ' + authToken
+      },
       body: JSON.stringify({
         delivered_item_id: deliveredItemId,
         report_type:       reportType,
@@ -1727,17 +1741,22 @@ async function submitCreateQC() {
         notes:             notes || null
       })
     });
+
+    console.log('[submitCreateQC] response status:', rawRes.status);
+    const res = await rawRes.json();
+    console.log('[submitCreateQC] response body:', res);
+
     if (res.success) {
       showToast('QC report created successfully.', 'success');
       hideCreateQC();
       loadQC();
     } else {
-      // Show detailed validation errors if available
       const detail = res.errors ? res.errors.map(e => e.msg).join(', ') : (res.message || 'Failed to create QC report.');
       if (errEl) errEl.textContent = detail;
     }
   } catch (e) {
-    if (errEl) errEl.textContent = e.message;
+    console.error('[submitCreateQC] fetch threw:', e);
+    if (errEl) errEl.textContent = 'Network error: ' + e.message;
   }
 }
 
