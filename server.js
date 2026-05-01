@@ -39,6 +39,13 @@ const path = require("path");
 const app  = express();
 const PORT = process.env.PORT || 3000;
 
+// Parse roles — ARRAY_AGG returns "{ROLE}" string; normalize to array always
+function parseRoles(r) {
+  if (!r) return [];
+  if (Array.isArray(r)) return r.filter(Boolean);
+  return String(r).replace(/^{|}$/g, '').split(',').filter(Boolean);
+}
+
 // =============================================================================
 // DATABASE CONNECTIONS
 // =============================================================================
@@ -187,13 +194,13 @@ app.post(
         return res.status(401).json({ success: false, message: "Invalid credentials." });
 
       const token = jwt.sign(
-        { emp_id: user.emp_id, email: user.email, roles: user.roles.filter(Boolean) },
+        { emp_id: user.emp_id, email: user.email, roles: parseRoles(user.roles) },
         process.env.JWT_SECRET || "changeme",
         { expiresIn: process.env.JWT_EXPIRES_IN || "8h" }
       );
 
       await logAudit(user.emp_id, "LOGIN", "USER", user.emp_id, "SUCCESS", req);
-      res.json({ success: true, token, user: { emp_id: user.emp_id, full_name: user.full_name, email: user.email, roles: user.roles } });
+      res.json({ success: true, token, user: { emp_id: user.emp_id, full_name: user.full_name, email: user.email, roles: parseRoles(user.roles) } });
     } catch (err) {
       res.status(500).json({ success: false, message: err.message });
     }
@@ -1144,7 +1151,9 @@ app.get("/api/users/me", authenticate, async (req, res) => {
         GROUP BY u.emp_id`,
       [req.user.emp_id]
     );
-    res.json({ success: true, data: rows[0] });
+    const me = rows[0];
+    if (me) me.roles = parseRoles(me.roles);
+    res.json({ success: true, data: me });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -1163,7 +1172,8 @@ app.get("/api/users", authenticate,
           GROUP BY u.emp_id
           ORDER BY u.full_name`
       );
-      res.json({ success: true, data: rows });
+      const users = rows.map(u => ({ ...u, roles: parseRoles(u.roles) }));
+      res.json({ success: true, data: users });
     } catch (err) {
       res.status(500).json({ success: false, message: err.message });
     }
