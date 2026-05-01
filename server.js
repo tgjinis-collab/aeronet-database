@@ -109,7 +109,7 @@ app.use(helmet({
   },
 }));
 app.use(cors({
-  origin: "https://aeronet-database.onrender.com",
+  origin: process.env.CORS_ORIGIN || '*',
   methods: ['GET','POST','PUT','PATCH','DELETE','OPTIONS'],
   allowedHeaders: ['Content-Type','Authorization','Accept'],
   exposedHeaders: ['Authorization'],
@@ -783,8 +783,8 @@ app.post(
   [
     body("delivered_item_id").isUUID(),
     body("report_type").isIn(["VISUAL_INSPECTION","DIMENSIONAL_CHECK","NON_DESTRUCTIVE_TESTING","ENVIRONMENTAL_STRESS"]),
-    body("results").notEmpty(),
-    body("inspectionDate").isISO8601(),
+    body("results").exists().withMessage("results is required"),
+    body("inspectionDate").isISO8601().withMessage("inspectionDate must be a valid ISO 8601 date"),
   ],
   validate,
   async (req, res) => {
