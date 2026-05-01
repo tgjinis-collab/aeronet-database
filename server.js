@@ -75,8 +75,14 @@ async function connectMongo() {
 // MIDDLEWARE
 // =============================================================================
 
-app.use(helmet());
-app.use(cors({ origin: process.env.CORS_ORIGIN || "*" }));
+app.use(helmet({ contentSecurityPolicy: false }));
+app.use(cors({
+  origin: process.env.CORS_ORIGIN || '*',
+  methods: ['GET','POST','PUT','PATCH','DELETE','OPTIONS'],
+  allowedHeaders: ['Content-Type','Authorization','Accept'],
+  credentials: false,
+}));
+app.options('*', cors());
 app.use(express.json());
 app.use(morgan("dev"));
 
