@@ -783,12 +783,12 @@ app.post(
   [
     body("delivered_item_id").isUUID(),
     body("report_type").isIn(["VISUAL_INSPECTION","DIMENSIONAL_CHECK","NON_DESTRUCTIVE_TESTING","ENVIRONMENTAL_STRESS"]),
-    body("results").exists().withMessage("results is required"),
-    body("inspectionDate").isISO8601().withMessage("inspectionDate must be a valid ISO 8601 date"),
   ],
   validate,
   async (req, res) => {
-    const { delivered_item_id, report_type, results, inspectionDate, notes } = req.body;
+    const { delivered_item_id, report_type, notes } = req.body;
+    const results = req.body.results || { notes: notes || 'Pending' };
+    const inspectionDate = req.body.inspectionDate || new Date().toISOString();
     const client = await pgPool.connect();
     try {
       await client.query("BEGIN");
