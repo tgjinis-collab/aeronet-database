@@ -39,25 +39,6 @@ const path = require("path");
 const app  = express();
 const PORT = process.env.PORT || 3000;
 
-// Safe roles parser — ARRAY_AGG can return "{ROLE}" string, array, or null
-function parseRoles(r) {
-  if (!r) return [];
-  if (Array.isArray(r)) return r.filter(Boolean);
-  if (typeof r === 'string') return r.replace(/^{|}$/g,'').split(',').filter(Boolean);
-  return [];
-}
-
-// Derive access level from role for display in Users table
-function deriveAccessLevel(roles) {
-  const r = parseRoles(roles);
-  if (r.includes('AUDITOR'))              return 'AUDIT';
-  if (r.includes('QUALITY_INSPECTOR'))    return 'APPROVE';
-  if (r.includes('SUPPLY_CHAIN_MANAGER')) return 'READ_WRITE';
-  if (r.includes('PROCUREMENT_OFFICER'))  return 'WRITE';
-  if (r.includes('EQUIPMENT_ENGINEER'))   return 'WRITE';
-  return 'READ';
-}
-
 // =============================================================================
 // DATABASE CONNECTIONS
 // =============================================================================
@@ -94,29 +75,8 @@ async function connectMongo() {
 // MIDDLEWARE
 // =============================================================================
 
-app.use(helmet({
-  contentSecurityPolicy: {
-    directives: {
-      defaultSrc:    ["'self'"],
-      scriptSrc:     ["'self'", "'unsafe-inline'", "'unsafe-eval'", "cdnjs.cloudflare.com", "fonts.googleapis.com"],
-      scriptSrcAttr: ["'unsafe-inline'"],
-      scriptSrcElem: ["'self'", "'unsafe-inline'", "cdnjs.cloudflare.com", "fonts.googleapis.com"],
-      styleSrc:      ["'self'", "'unsafe-inline'", "fonts.googleapis.com"],
-      fontSrc:       ["'self'", "fonts.gstatic.com", "data:"],
-      connectSrc:    ["'self'"],
-      imgSrc:        ["'self'", "data:", "blob:"],
-    },
-  },
-}));
-app.use(cors({
-  origin: process.env.CORS_ORIGIN || '*',
-  methods: ['GET','POST','PUT','PATCH','DELETE','OPTIONS'],
-  allowedHeaders: ['Content-Type','Authorization','Accept'],
-  exposedHeaders: ['Authorization'],
-  credentials: false,
-}));
-// Handle preflight for all routes
-app.options('*', cors());
+app.use(helmet());
+app.use(cors({ origin: process.env.CORS_ORIGIN || "*" }));
 app.use(express.json());
 app.use(morgan("dev"));
 
@@ -221,13 +181,13 @@ app.post(
         return res.status(401).json({ success: false, message: "Invalid credentials." });
 
       const token = jwt.sign(
-        { emp_id: user.emp_id, email: user.email, roles: parseRoles(user.roles) },
+        { emp_id: user.emp_id, email: user.email, roles: user.roles.filter(Boolean) },
         process.env.JWT_SECRET || "changeme",
         { expiresIn: process.env.JWT_EXPIRES_IN || "8h" }
       );
 
       await logAudit(user.emp_id, "LOGIN", "USER", user.emp_id, "SUCCESS", req);
-      res.json({ success: true, token, user: { emp_id: user.emp_id, full_name: user.full_name, email: user.email, roles: parseRoles(user.roles) } });
+      res.json({ success: true, token, user: { emp_id: user.emp_id, full_name: user.full_name, email: user.email, roles: user.roles } });
     } catch (err) {
       res.status(500).json({ success: false, message: err.message });
     }
@@ -644,11 +604,9 @@ app.post(
 
 app.get("/api/shipments/:id/events", authenticate, [param("id").isUUID()], validate, async (req, res) => {
   try {
-    const events = await mongoDB
-      .collection("shipment_events")
-      .find({ _pgShipmentRef: req.params.id })
-      .sort({ timestamp: 1 })
-      .toArray();
+    const events = mongoDB
+      ? await mongoDB.collection("shipment_events").find({ _pgShipmentRef: req.params.id }).sort({ timestamp: 1 }).toArray()
+      : [];
     res.json({ success: true, data: events });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
@@ -678,6 +636,7 @@ app.post(
         notes:          req.body.notes || null,
         loggedBy:       req.user.emp_id,
       };
+      if (!mongoDB) return res.status(503).json({ success: false, message: "MongoDB unavailable." });
       const result = await mongoDB.collection("shipment_events").insertOne(doc);
       await logAudit(req.user.emp_id, "CREATE", "SHIPMENT_EVENT", req.params.id, "SUCCESS", req, { eventType: doc.eventType });
       res.status(201).json({ success: true, data: { _id: result.insertedId, ...doc } });
@@ -704,7 +663,7 @@ app.get("/api/shipments/:id/items", authenticate, [param("id").isUUID()], valida
   }
 });
 
-// GET /api/delivered-items  — all delivered items (for QC report form)
+// GET /api/delivered-items  — all delivered items (for QC report form dropdown)
 app.get("/api/delivered-items", authenticate, async (req, res) => {
   try {
     const { limit = 100, offset = 0 } = req.query;
@@ -765,7 +724,7 @@ app.get("/api/qc-reports/:id", authenticate, [param("id").isUUID()], validate, a
     );
     if (!rows[0]) return res.status(404).json({ success: false, message: "QC report not found." });
 
-    const mongoDoc = rows[0].mongo_doc_ref
+    const mongoDoc = (rows[0].mongo_doc_ref && mongoDB)
       ? await mongoDB.collection("qc_reports").findOne({ _pgRef: req.params.id })
       : null;
 
@@ -783,12 +742,12 @@ app.post(
   [
     body("delivered_item_id").isUUID(),
     body("report_type").isIn(["VISUAL_INSPECTION","DIMENSIONAL_CHECK","NON_DESTRUCTIVE_TESTING","ENVIRONMENTAL_STRESS"]),
+    body("results").notEmpty(),
+    body("inspectionDate").isISO8601(),
   ],
   validate,
   async (req, res) => {
-    const { delivered_item_id, report_type, notes } = req.body;
-    const results = req.body.results || { notes: notes || 'Pending' };
-    const inspectionDate = req.body.inspectionDate || new Date().toISOString();
+    const { delivered_item_id, report_type, results, inspectionDate, notes } = req.body;
     const client = await pgPool.connect();
     try {
       await client.query("BEGIN");
@@ -824,13 +783,14 @@ app.post(
           resultSnapshot: results,
         }],
       };
-      await mongoDB.collection("qc_reports").insertOne(mongoDoc);
-
-      // 3. Update PG header with mongo ref
-      await client.query(
-        "UPDATE qc_report SET mongo_doc_ref = $1 WHERE qc_report_id = $2",
-        [`mongo:qc_reports:${header.qc_report_id}`, header.qc_report_id]
-      );
+      if (mongoDB) {
+        await mongoDB.collection("qc_reports").insertOne(mongoDoc);
+        // Update PG header with mongo ref
+        await client.query(
+          "UPDATE qc_report SET mongo_doc_ref = $1 WHERE qc_report_id = $2",
+          [`mongo:qc_reports:${header.qc_report_id}`, header.qc_report_id]
+        );
+      }
 
       await client.query("COMMIT");
       await logAudit(req.user.emp_id, "CREATE", "QC_REPORT", header.qc_report_id, "SUCCESS", req, { report_type });
@@ -864,7 +824,7 @@ app.patch(
       if (!rows[0]) return res.status(404).json({ success: false, message: "QC report not found." });
 
       // Push new version into MongoDB array
-      await mongoDB.collection("qc_reports").updateOne(
+      if (mongoDB) await mongoDB.collection("qc_reports").updateOne(
         { _pgRef: req.params.id },
         {
           $set:  { current_status: status, updatedAt: new Date() },
@@ -903,9 +863,9 @@ app.get("/api/certifications/:id", authenticate, [param("id").isUUID()], validat
     );
     if (!rows[0]) return res.status(404).json({ success: false, message: "Certification not found." });
 
-    const mongoDoc = await mongoDB
-      .collection("certification_documents")
-      .findOne({ _pgRef: req.params.id });
+    const mongoDoc = mongoDB
+      ? await mongoDB.collection("certification_documents").findOne({ _pgRef: req.params.id })
+      : null;
 
     await logAudit(req.user.emp_id, "VIEW", "CERTIFICATION", req.params.id, "SUCCESS", req);
     res.json({ success: true, data: { header: rows[0], document: mongoDoc } });
@@ -947,12 +907,13 @@ app.post(
         approval:          null,
         is_immutable:      false,
       };
-      await mongoDB.collection("certification_documents").insertOne(mongoDoc);
-
-      await client.query(
-        "UPDATE certification SET mongo_doc_ref = $1 WHERE certification_id = $2",
-        [`mongo:certification_documents:${cert.certification_id}`, cert.certification_id]
-      );
+      if (mongoDB) {
+        await mongoDB.collection("certification_documents").insertOne(mongoDoc);
+        await client.query(
+          "UPDATE certification SET mongo_doc_ref = $1 WHERE certification_id = $2",
+          [`mongo:certification_documents:${cert.certification_id}`, cert.certification_id]
+        );
+      }
 
       await client.query("COMMIT");
       await logAudit(req.user.emp_id, "CREATE", "CERTIFICATION", cert.certification_id, "SUCCESS", req);
@@ -1001,8 +962,8 @@ app.post(
         });
       }
 
-      // Lock in MongoDB
-      await mongoDB.collection("certification_documents").updateOne(
+      // Lock in MongoDB (if available)
+      if (mongoDB) await mongoDB.collection("certification_documents").updateOne(
         { _pgRef: req.params.id },
         {
           $set: {
@@ -1177,9 +1138,7 @@ app.get("/api/users/me", authenticate, async (req, res) => {
         GROUP BY u.emp_id`,
       [req.user.emp_id]
     );
-    const user = rows[0];
-    if (user) user.access_level = deriveAccessLevel(user.roles);
-    res.json({ success: true, data: user });
+    res.json({ success: true, data: rows[0] });
   } catch (err) {
     res.status(500).json({ success: false, message: err.message });
   }
@@ -1198,8 +1157,7 @@ app.get("/api/users", authenticate,
           GROUP BY u.emp_id
           ORDER BY u.full_name`
       );
-      const withAccess = rows.map(u => ({ ...u, access_level: deriveAccessLevel(u.roles) }));
-      res.json({ success: true, data: withAccess });
+      res.json({ success: true, data: rows });
     } catch (err) {
       res.status(500).json({ success: false, message: err.message });
     }
@@ -1257,6 +1215,7 @@ app.post(
 app.get(
   "/api/audit-logs",
   authenticate,
+  authorize("AUDITOR", "SUPPLY_CHAIN_MANAGER"),
   async (req, res) => {
     try {
       const { emp_id, entity_type, entity_id, action_type, from, to, limit = 100, offset = 0 } = req.query;
@@ -1336,8 +1295,7 @@ app.get("/api/dashboard/supplier-kpis", authenticate,
           GROUP BY s.supplier_id
           ORDER BY total_orders DESC`
       );
-      const withAccess = rows.map(u => ({ ...u, access_level: deriveAccessLevel(u.roles) }));
-      res.json({ success: true, data: withAccess });
+      res.json({ success: true, data: rows });
     } catch (err) {
       res.status(500).json({ success: false, message: err.message });
     }
@@ -1360,12 +1318,9 @@ app.get("/api/dashboard/shipment-status", authenticate,
       // Enrich with latest MongoDB event per shipment
       const enriched = await Promise.all(
         rows.map(async (ship) => {
-          const lastEvent = await mongoDB
-            .collection("shipment_events")
-            .findOne(
-              { _pgShipmentRef: ship.shipment_id },
-              { sort: { timestamp: -1 } }
-            );
+          const lastEvent = mongoDB
+            ? await mongoDB.collection("shipment_events").findOne({ _pgShipmentRef: ship.shipment_id }, { sort: { timestamp: -1 } })
+            : null;
           return { ...ship, last_event: lastEvent || null };
         })
       );
@@ -1399,14 +1354,12 @@ app.get("/api/dashboard/qc-insights", authenticate, async (req, res) => {
 });
 
 app.get("/api/dashboard/iot-anomalies", authenticate,
+  authorize("EQUIPMENT_ENGINEER", "SUPPLY_CHAIN_MANAGER"),
   async (req, res) => {
     try {
-      const anomalies = await mongoDB
-        .collection("sensor_readings")
-        .find({ anomaly: true })
-        .sort({ timestamp: -1 })
-        .limit(20)
-        .toArray();
+      const anomalies = mongoDB
+        ? await mongoDB.collection("sensor_readings").find({ anomaly: true }).sort({ timestamp: -1 }).limit(20).toArray()
+        : [];
       res.json({ success: true, count: anomalies.length, data: anomalies });
     } catch (err) {
       res.status(500).json({ success: false, message: err.message });

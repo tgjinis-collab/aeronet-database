@@ -486,7 +486,40 @@ td.mono{font-family:var(--font-mono);font-size:10px}
     <div class="page" id="page-certifications">
       <div class="page-header">
         <div><div class="page-title">Certifications</div><div class="page-sub">Immutable records · Inspector approvals · Version history</div></div>
-        <div class="header-actions"><button class="btn btn-primary btn-sm" data-action="loadCertifications()">↺ Refresh</button></div>
+        <div class="header-actions">
+          <button class="btn btn-primary btn-sm" id="btn-create-cert" data-action="showCreateCert()" style="display:none">+ New Cert</button>
+          <button class="btn btn-ghost btn-sm" data-action="loadCertifications()">↺ Refresh</button>
+        </div>
+      </div>
+      <div id="create-cert-form" style="display:none" class="panel panel-accent mb-4">
+        <div class="panel-head">
+          <div class="panel-title">+ New Certification</div>
+          <button class="btn btn-ghost btn-sm" data-action="hideCreateCert()">✕ Cancel</button>
+        </div>
+        <div class="panel-body">
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+            <div>
+              <label style="font-size:9px;letter-spacing:2px;color:var(--text3);text-transform:uppercase;display:block;margin-bottom:6px">Delivered Item</label>
+              <select id="cert-item-id" class="filter-select" style="width:100%"><option value="">Loading...</option></select>
+            </div>
+            <div>
+              <label style="font-size:9px;letter-spacing:2px;color:var(--text3);text-transform:uppercase;display:block;margin-bottom:6px">Test Type</label>
+              <select id="cert-test-type" class="filter-select" style="width:100%">
+                <option value="Dimensional Check">Dimensional Check</option>
+                <option value="Non-Destructive Test">Non-Destructive Test</option>
+                <option value="Visual Inspection">Visual Inspection</option>
+                <option value="Load Test">Load Test</option>
+                <option value="Environmental Test">Environmental Test</option>
+              </select>
+            </div>
+          </div>
+          <div style="margin-bottom:12px">
+            <label style="font-size:9px;letter-spacing:2px;color:var(--text3);text-transform:uppercase;display:block;margin-bottom:6px">Test Result / Notes</label>
+            <textarea id="cert-notes" rows="2" class="search-input" placeholder="Describe test results..." style="width:100%;resize:vertical;margin-bottom:0"></textarea>
+          </div>
+          <div id="create-cert-error" style="color:var(--red);font-size:10px;margin-bottom:8px;min-height:14px"></div>
+          <button class="btn btn-primary" data-action="submitCreateCert()">Create Certification</button>
+        </div>
       </div>
       <div class="alert-strip info">🔒 Certifications are immutable once approved — no modifications permitted after locking.</div>
       <div id="auditor-flag-panel" style="display:none;margin-bottom:16px">
@@ -765,7 +798,7 @@ document.addEventListener('keydown', e => {
 // ── API HELPER ────────────────────────────────────────────────────────────────
 async function apiFetch(path, opts = {}) {
   // Always read token fresh — handles page refresh / session edge cases
-  const authToken = lsGet('aeronet_token');
+  const authToken = lsGet('aeronet_token') || token;
 
   // Validate before sending
   if (!authToken || authToken === 'null' || authToken === 'undefined' || authToken.length < 20) {
@@ -786,13 +819,7 @@ async function apiFetch(path, opts = {}) {
   const requestInit = { method: opts.method || 'GET', headers };
   if (opts.body) requestInit.body = opts.body;
 
-  // Debug: log what we're sending
-  console.log('[apiFetch]', opts.method || 'GET', API + path);
-  console.log('[apiFetch] token present:', !!authToken, 'length:', authToken?.length);
-  console.log('[apiFetch] auth header:', headers.get('Authorization')?.substring(0, 20) + '...');
-
   const res = await fetch(API + path, requestInit);
-  console.log('[apiFetch] response status:', res.status);
 
   if (res.status === 401) {
     token = null;
@@ -1001,8 +1028,10 @@ function applyRBAC() {
     const btnQC    = document.getElementById('btn-create-qc');
     const flagPanel= document.getElementById('auditor-flag-panel');
 
+    const btnCert = document.getElementById('btn-create-cert');
     if (btnOrder)  { btnOrder.style.display  = isProc  ? 'flex' : 'none'; }
     if (btnQC)     { btnQC.style.display     = isQI    ? 'flex' : 'none'; }
+    if (btnCert)   { btnCert.style.display   = isQI    ? 'flex' : 'none'; }
     if (flagPanel) { flagPanel.style.display = isAudit ? ''     : 'none'; }
 
     // Debug log to confirm
@@ -1723,30 +1752,16 @@ async function submitCreateQC() {
   };
   const resultsPayload = resultsMap[reportType] || { notes: notes || 'Pending' };
   try {
-    // Use raw fetch to bypass any apiFetch issues — explicit header construction
-    const authToken = token || lsGet('aeronet_token');
-    console.log('[submitCreateQC] authToken present:', !!authToken, 'first20:', authToken?.substring(0,20));
-
-    const rawRes = await fetch(API + '/api/qc-reports', {
+    const res = await apiFetch('/api/qc-reports', {
       method: 'POST',
-      headers: {
-        'Content-Type':  'application/json',
-        'Authorization': 'Bearer ' + authToken
-      },
       body: JSON.stringify({
         delivered_item_id: deliveredItemId,
         report_type:       reportType,
         results:           resultsPayload,
         inspectionDate:    today,
-        notes:             notes || null,
-        status:            status || 'SUBMITTED'
+        notes:             notes || null
       })
     });
-
-    console.log('[submitCreateQC] response status:', rawRes.status);
-    const res = await rawRes.json();
-    console.log('[submitCreateQC] response body:', res);
-
     if (res.success) {
       showToast('QC report created successfully.', 'success');
       hideCreateQC();
@@ -1756,9 +1771,60 @@ async function submitCreateQC() {
       if (errEl) errEl.textContent = detail;
     }
   } catch (e) {
-    console.error('[submitCreateQC] fetch threw:', e);
-    if (errEl) errEl.textContent = 'Network error: ' + e.message;
+    if (errEl) errEl.textContent = e.message;
   }
+}
+
+// ── CREATE CERTIFICATION (Quality Inspector) ─────────────────────────────────
+async function showCreateCert() {
+  const form = document.getElementById('create-cert-form');
+  const btn  = document.getElementById('btn-create-cert');
+  if (form) form.style.display = 'block';
+  if (btn)  btn.style.display  = 'none';
+  const sel = document.getElementById('cert-item-id');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">Loading...</option>';
+  try {
+    const data = await apiFetch('/api/delivered-items?limit=100');
+    const items = data.data || [];
+    sel.innerHTML = items.length
+      ? items.map(i => `<option value="${i.delivered_item_id}">${i.serial_number || shortId(i.delivered_item_id)} — ${i.part_name || ''} · ${i.supplier_name || ''}</option>`).join('')
+      : '<option value="">No delivered items found</option>';
+  } catch(e) { sel.innerHTML = `<option value="">Error: ${e.message}</option>`; }
+}
+function hideCreateCert() {
+  const form = document.getElementById('create-cert-form');
+  const btn  = document.getElementById('btn-create-cert');
+  const err  = document.getElementById('create-cert-error');
+  if (form) form.style.display = 'none';
+  if (btn)  btn.style.display  = 'flex';
+  if (err)  err.textContent    = '';
+}
+async function submitCreateCert() {
+  const deliveredItemId = document.getElementById('cert-item-id')?.value;
+  const testType        = document.getElementById('cert-test-type')?.value;
+  const notes           = document.getElementById('cert-notes')?.value.trim();
+  const errEl           = document.getElementById('create-cert-error');
+  if (errEl) errEl.textContent = '';
+  if (!deliveredItemId) { if(errEl) errEl.textContent = 'Please select a delivered item.'; return; }
+  try {
+    const res = await apiFetch('/api/certifications', {
+      method: 'POST',
+      body: JSON.stringify({
+        delivered_item_id: deliveredItemId,
+        testResults: [{ testType, result: 'Pass', details: { notes: notes || 'Certified' } }],
+        materialTraceability: []
+      })
+    });
+    if (res.success) {
+      showToast('Certification created successfully.', 'success');
+      hideCreateCert();
+      loadCertifications();
+    } else {
+      const detail = res.errors ? res.errors.map(e => e.msg).join(', ') : (res.message || 'Failed.');
+      if (errEl) errEl.textContent = detail;
+    }
+  } catch (e) { if (errEl) errEl.textContent = e.message; }
 }
 
 // ── FLAG NON-COMPLIANCE (Auditor) ─────────────────────────────────────────────
@@ -1804,7 +1870,7 @@ document.addEventListener('DOMContentLoaded', function() {
           a = a.trim();
           if (a === 'true')  return true;
           if (a === 'false') return false;
-          if (a.length > 1 && ((a[0]==="'" && a[a.length-1]==="'") || (a[0]==='"' && a[a.length-1]==='"'))) return a.slice(1,-1);
+          if ((a[0]==="'" && a[a.length-1]==="'") || (a[0]==='"' && a[a.length-1]==='"')) return a.slice(1,-1);
           return a;
         });
         fn.apply(null, args);
@@ -1826,6 +1892,7 @@ window.exportCSV=exportCSV; window.drillDown=drillDown;
 window.showVersionHistory=showVersionHistory;
 window.showCreateOrder=showCreateOrder; window.hideCreateOrder=hideCreateOrder; window.submitCreateOrder=submitCreateOrder;
 window.showCreateQC=showCreateQC; window.hideCreateQC=hideCreateQC; window.submitCreateQC=submitCreateQC;
+window.showCreateCert=showCreateCert; window.hideCreateCert=hideCreateCert; window.submitCreateCert=submitCreateCert;
 window.submitFlag=submitFlag;
 </script>
 </body>
