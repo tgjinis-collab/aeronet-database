@@ -696,6 +696,11 @@ async function doLogin() {
 
     token = data.token;
     currentUser = data.user;
+    // Normalize roles — server may return "{ROLE}" string or array
+    if (currentUser && !Array.isArray(currentUser.roles)) {
+      const r = String(currentUser.roles || '').replace(/^{|}$/g,'');
+      currentUser.roles = r ? r.split(',').filter(Boolean) : [];
+    }
     lsSet('aeronet_token', token);
 
     resetAppState();
@@ -781,6 +786,10 @@ async function tryAutoLogin() {
     const res = await apiFetch('/api/users/me');
     if (res.success) {
       currentUser = res.data;
+      if (currentUser && !Array.isArray(currentUser.roles)) {
+        const r = String(currentUser.roles || '').replace(/^{|}$/g,'');
+        currentUser.roles = r ? r.split(',').filter(Boolean) : [];
+      }
       resetAppState();
       document.getElementById('login-screen').style.display = 'none';
       document.getElementById('app').style.display = 'grid';
@@ -979,7 +988,13 @@ const ROLE_CONFIG = {
 
 function getUserRole() {
   if (!currentUser) return null;
-  const roles = (currentUser.roles || []).filter(Boolean);
+  let roles = currentUser.roles || [];
+  if (!Array.isArray(roles)) {
+    const r = String(roles).replace(/^{|}$/g,'');
+    roles = r ? r.split(',').filter(Boolean) : [];
+  } else {
+    roles = roles.filter(Boolean);
+  }
   const priority = ['SUPPLY_CHAIN_MANAGER','PROCUREMENT_OFFICER','QUALITY_INSPECTOR','EQUIPMENT_ENGINEER','AUDITOR'];
   return priority.find(r => roles.includes(r)) || roles[0] || null;
 }
