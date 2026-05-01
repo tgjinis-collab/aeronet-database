@@ -46,6 +46,10 @@ function parseRoles(r) {
   return String(r).replace(/^{|}$/g, '').split(',').filter(Boolean);
 }
 
+// Custom UUID validator — accepts any 8-4-4-4-12 hex pattern (seed UUIDs have version 0)
+const isUUIDlike = (value) => /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(value);
+const uuidField  = (field) => body(field).custom(isUUIDlike).withMessage(`${field} must be a valid UUID`);
+
 // =============================================================================
 // DATABASE CONNECTIONS
 // =============================================================================
@@ -246,7 +250,7 @@ app.get("/api/suppliers", authenticate, async (req, res) => {
   }
 });
 
-app.get("/api/suppliers/:id", authenticate, [param("id").isUUID()], validate, async (req, res) => {
+app.get("/api/suppliers/:id", authenticate, [param("id").custom(isUUIDlike)], validate, async (req, res) => {
   try {
     const { rows } = await pgPool.query("SELECT * FROM supplier WHERE supplier_id = $1", [req.params.id]);
     if (!rows[0]) return res.status(404).json({ success: false, message: "Supplier not found." });
@@ -288,7 +292,7 @@ app.put(
   "/api/suppliers/:id",
   authenticate,
   authorize("PROCUREMENT_OFFICER"),
-  [param("id").isUUID()],
+  [param("id").custom(isUUIDlike)],
   validate,
   async (req, res) => {
     const allowed = ["business_name","address","contact_name","contact_email","contact_phone","accreditation"];
@@ -310,7 +314,7 @@ app.put(
   }
 );
 
-app.get("/api/suppliers/:id/parts", authenticate, [param("id").isUUID()], validate, async (req, res) => {
+app.get("/api/suppliers/:id/parts", authenticate, [param("id").custom(isUUIDlike)], validate, async (req, res) => {
   try {
     const { rows } = await pgPool.query(
       `SELECT spo.*, p.part_name, p.description
@@ -352,7 +356,7 @@ app.get("/api/parts", authenticate, async (req, res) => {
   }
 });
 
-app.get("/api/parts/:id", authenticate, [param("id").isUUID()], validate, async (req, res) => {
+app.get("/api/parts/:id", authenticate, [param("id").custom(isUUIDlike)], validate, async (req, res) => {
   try {
     const { rows } = await pgPool.query("SELECT * FROM part WHERE part_id = $1", [req.params.id]);
     if (!rows[0]) return res.status(404).json({ success: false, message: "Part not found." });
@@ -383,7 +387,7 @@ app.post(
   }
 );
 
-app.get("/api/parts/:id/spec", authenticate, [param("id").isUUID()], validate, async (req, res) => {
+app.get("/api/parts/:id/spec", authenticate, [param("id").custom(isUUIDlike)], validate, async (req, res) => {
   try {
     const { rows } = await pgPool.query(
       "SELECT * FROM part_baseline_spec WHERE part_id = $1", [req.params.id]
@@ -395,7 +399,7 @@ app.get("/api/parts/:id/spec", authenticate, [param("id").isUUID()], validate, a
   }
 });
 
-app.get("/api/parts/:id/spec/full", authenticate, [param("id").isUUID()], validate, async (req, res) => {
+app.get("/api/parts/:id/spec/full", authenticate, [param("id").custom(isUUIDlike)], validate, async (req, res) => {
   try {
     const { rows } = await pgPool.query(
       "SELECT * FROM part_baseline_spec WHERE part_id = $1", [req.params.id]
@@ -446,7 +450,7 @@ app.get("/api/orders", authenticate, async (req, res) => {
   }
 });
 
-app.get("/api/orders/:id", authenticate, [param("id").isUUID()], validate, async (req, res) => {
+app.get("/api/orders/:id", authenticate, [param("id").custom(isUUIDlike)], validate, async (req, res) => {
   try {
     const { rows } = await pgPool.query(
       `SELECT po.*, s.business_name AS supplier_name
@@ -468,7 +472,7 @@ app.post(
   authenticate,
   authorize("PROCUREMENT_OFFICER"),
   [
-    body("supplier_id").isUUID(),
+    uuidField("supplier_id"),
     body("order_date").optional(),
     body("desired_delivery_date").optional(),
     body("lines").optional().isArray(),
@@ -521,7 +525,7 @@ app.patch(
   authenticate,
   authorize("PROCUREMENT_OFFICER", "SUPPLY_CHAIN_MANAGER"),
   [
-    param("id").isUUID(),
+    param("id").custom(isUUIDlike),
     body("status").isIn(["PLACED","CONFIRMED","DISPATCHED","DELIVERED","COMPLETED","CANCELLED"]),
   ],
   validate,
@@ -540,7 +544,7 @@ app.patch(
   }
 );
 
-app.get("/api/orders/:id/lines", authenticate, [param("id").isUUID()], validate, async (req, res) => {
+app.get("/api/orders/:id/lines", authenticate, [param("id").custom(isUUIDlike)], validate, async (req, res) => {
   try {
     const { rows } = await pgPool.query(
       `SELECT pol.*, spo.customisation_summary, p.part_name
@@ -581,7 +585,7 @@ app.get("/api/shipments", authenticate, async (req, res) => {
   }
 });
 
-app.get("/api/shipments/:id", authenticate, [param("id").isUUID()], validate, async (req, res) => {
+app.get("/api/shipments/:id", authenticate, [param("id").custom(isUUIDlike)], validate, async (req, res) => {
   try {
     const { rows } = await pgPool.query(
       `SELECT s.*, po.supplier_id FROM shipment s JOIN purchase_order po ON po.order_id = s.order_id WHERE s.shipment_id = $1`,
@@ -600,7 +604,7 @@ app.post(
   authenticate,
   authorize("PROCUREMENT_OFFICER", "SUPPLY_CHAIN_MANAGER"),
   [
-    body("order_id").isUUID(),
+    uuidField("order_id"),
     body("tracking_number").notEmpty().trim(),
   ],
   validate,
@@ -620,7 +624,7 @@ app.post(
   }
 );
 
-app.get("/api/shipments/:id/events", authenticate, [param("id").isUUID()], validate, async (req, res) => {
+app.get("/api/shipments/:id/events", authenticate, [param("id").custom(isUUIDlike)], validate, async (req, res) => {
   try {
     const events = mongoDB
       ? await mongoDB.collection("shipment_events").find({ _pgShipmentRef: req.params.id }).sort({ timestamp: 1 }).toArray()
@@ -636,7 +640,7 @@ app.post(
   authenticate,
   authorize("SUPPLY_CHAIN_MANAGER", "PROCUREMENT_OFFICER"),
   [
-    param("id").isUUID(),
+    param("id").custom(isUUIDlike),
     body("eventType").isIn(["CHECKPOINT", "CONDITION_UPDATE"]),
     body("location").notEmpty(),
     body("containerCondition").optional().isObject(),
@@ -664,7 +668,7 @@ app.post(
   }
 );
 
-app.get("/api/shipments/:id/items", authenticate, [param("id").isUUID()], validate, async (req, res) => {
+app.get("/api/shipments/:id/items", authenticate, [param("id").custom(isUUIDlike)], validate, async (req, res) => {
   try {
     const { rows } = await pgPool.query(
       `SELECT di.*, pol.quantity, p.part_name
@@ -735,7 +739,7 @@ app.get("/api/qc-reports", authenticate, async (req, res) => {
   }
 });
 
-app.get("/api/qc-reports/:id", authenticate, [param("id").isUUID()], validate, async (req, res) => {
+app.get("/api/qc-reports/:id", authenticate, [param("id").custom(isUUIDlike)], validate, async (req, res) => {
   try {
     const { rows } = await pgPool.query(
       "SELECT * FROM qc_report WHERE qc_report_id = $1", [req.params.id]
@@ -758,7 +762,7 @@ app.post(
   authenticate,
   authorize("QUALITY_INSPECTOR"),
   [
-    body("delivered_item_id").isUUID(),
+    uuidField("delivered_item_id"),
     body("report_type").isIn(["VISUAL_INSPECTION","DIMENSIONAL_CHECK","NON_DESTRUCTIVE_TESTING","ENVIRONMENTAL_STRESS"]),
   ],
   validate,
@@ -827,7 +831,7 @@ app.patch(
   authenticate,
   authorize("QUALITY_INSPECTOR"),
   [
-    param("id").isUUID(),
+    param("id").custom(isUUIDlike),
     body("status").isIn(["SUBMITTED","APPROVED","REJECTED"]),
     body("summary").notEmpty().trim(),
   ],
@@ -874,7 +878,7 @@ app.patch(
 // POST   /api/certifications/:id/approve  — approve + lock immutability
 // =============================================================================
 
-app.get("/api/certifications/:id", authenticate, [param("id").isUUID()], validate, async (req, res) => {
+app.get("/api/certifications/:id", authenticate, [param("id").custom(isUUIDlike)], validate, async (req, res) => {
   try {
     const { rows } = await pgPool.query(
       "SELECT * FROM certification WHERE certification_id = $1", [req.params.id]
@@ -897,7 +901,7 @@ app.post(
   authenticate,
   authorize("QUALITY_INSPECTOR"),
   [
-    body("delivered_item_id").isUUID(),
+    uuidField("delivered_item_id"),
   ],
   validate,
   async (req, res) => {
@@ -950,7 +954,7 @@ app.post(
   authenticate,
   authorize("QUALITY_INSPECTOR"),
   [
-    param("id").isUUID(),
+    param("id").custom(isUUIDlike),
     body("digitalStamp").notEmpty().trim(),
     body("signatureRef").optional().isString(),
   ],
@@ -1031,7 +1035,7 @@ app.get("/api/equipment", authenticate, async (req, res) => {
   }
 });
 
-app.get("/api/equipment/:id", authenticate, [param("id").isUUID()], validate, async (req, res) => {
+app.get("/api/equipment/:id", authenticate, [param("id").custom(isUUIDlike)], validate, async (req, res) => {
   try {
     const { rows } = await pgPool.query(
       "SELECT * FROM equipment WHERE equipment_id = $1", [req.params.id]
@@ -1070,7 +1074,7 @@ app.post(
 
 app.get("/api/equipment/:id/readings", authenticate,
   authorize("EQUIPMENT_ENGINEER", "SUPPLY_CHAIN_MANAGER"),
-  [param("id").isUUID()], validate,
+  [param("id").custom(isUUIDlike)], validate,
   async (req, res) => {
     try {
       const { from, to, anomaly_only, limit = 100 } = req.query;
@@ -1096,7 +1100,7 @@ app.get("/api/equipment/:id/readings", authenticate,
   }
 );
 
-app.get("/api/equipment/:id/devices", authenticate, [param("id").isUUID()], validate, async (req, res) => {
+app.get("/api/equipment/:id/devices", authenticate, [param("id").custom(isUUIDlike)], validate, async (req, res) => {
   try {
     const { rows } = await pgPool.query(
       `SELECT * FROM iot_device WHERE assigned_to_type = 'EQUIPMENT' AND assigned_to_id = $1`,
@@ -1113,8 +1117,8 @@ app.post(
   authenticate,
   authorize("EQUIPMENT_ENGINEER"),
   [
-    body("deviceId").isUUID(),
-    body("assignedToId").isUUID(),
+    uuidField("deviceId"),
+    uuidField("assignedToId"),
     body("assignedToType").isIn(["EQUIPMENT","SHIPMENT","CONTAINER"]),
     body("temperature_c").isFloat().optional(),
     body("vibration_mm_s").isFloat().optional(),
