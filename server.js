@@ -790,17 +790,19 @@ app.post(
       );
 
       // 2. Create MongoDB document
+      // Commit PostgreSQL FIRST — always persists regardless of MongoDB
+      await client.query("COMMIT");
+      await logAudit(req.user.emp_id, "CREATE", "QC_REPORT", header.qc_report_id, "SUCCESS", req, { report_type });
+
+      // MongoDB is best-effort — failure does NOT undo the PG record
       const mongoDoc = {
         reportId:        `QC-${header.qc_report_id.substring(0,8).toUpperCase()}`,
         _pgRef:          header.qc_report_id,
-        partId:          delivered_item_id,   // placeholder — partId mirrors delivered_item_id
+        partId:          delivered_item_id,
         deliveredItemId: delivered_item_id,
         report_type,
         current_status:  "DRAFT",
-        inspector: {
-          _pgEmpId:    req.user.emp_id,
-          employeeId:  req.user.emp_id,
-        },
+        inspector:       { _pgEmpId: req.user.emp_id, employeeId: req.user.emp_id },
         inspectionDate,
         createdAt:  new Date(),
         updatedAt:  new Date(),
@@ -816,16 +818,17 @@ app.post(
         }],
       };
       if (mongoDB) {
-        await mongoDB.collection("qc_reports").insertOne(mongoDoc);
-        // Update PG header with mongo ref
-        await client.query(
-          "UPDATE qc_report SET mongo_doc_ref = $1 WHERE qc_report_id = $2",
-          [`mongo:qc_reports:${header.qc_report_id}`, header.qc_report_id]
-        );
+        try {
+          await mongoDB.collection("qc_reports").insertOne(mongoDoc);
+          await pgPool.query(
+            "UPDATE qc_report SET mongo_doc_ref = $1 WHERE qc_report_id = $2",
+            [`mongo:qc_reports:${header.qc_report_id}`, header.qc_report_id]
+          );
+        } catch (mongoErr) {
+          console.warn("MongoDB QC insert failed (non-fatal):", mongoErr.message);
+        }
       }
 
-      await client.query("COMMIT");
-      await logAudit(req.user.emp_id, "CREATE", "QC_REPORT", header.qc_report_id, "SUCCESS", req, { report_type });
       res.status(201).json({ success: true, data: { header, document: mongoDoc } });
     } catch (err) {
       await client.query("ROLLBACK");
@@ -927,10 +930,15 @@ app.post(
         [delivered_item_id]
       );
 
+      // Commit PostgreSQL FIRST
+      await client.query("COMMIT");
+      await logAudit(req.user.emp_id, "CREATE", "CERTIFICATION", cert.certification_id, "SUCCESS", req);
+
+      // MongoDB best-effort
       const mongoDoc = {
         certificationId:   cert.certification_id,
         _pgRef:            cert.certification_id,
-        partId:            delivered_item_id,   // placeholder — partId mirrors delivered_item_id
+        partId:            delivered_item_id,
         deliveredItemId:   delivered_item_id,
         certificationDate: new Date(),
         createdAt:         new Date(),
@@ -941,15 +949,17 @@ app.post(
         is_immutable:      false,
       };
       if (mongoDB) {
-        await mongoDB.collection("certification_documents").insertOne(mongoDoc);
-        await client.query(
-          "UPDATE certification SET mongo_doc_ref = $1 WHERE certification_id = $2",
-          [`mongo:certification_documents:${cert.certification_id}`, cert.certification_id]
-        );
+        try {
+          await mongoDB.collection("certification_documents").insertOne(mongoDoc);
+          await pgPool.query(
+            "UPDATE certification SET mongo_doc_ref = $1 WHERE certification_id = $2",
+            [`mongo:certification_documents:${cert.certification_id}`, cert.certification_id]
+          );
+        } catch (mongoErr) {
+          console.warn("MongoDB cert insert failed (non-fatal):", mongoErr.message);
+        }
       }
 
-      await client.query("COMMIT");
-      await logAudit(req.user.emp_id, "CREATE", "CERTIFICATION", cert.certification_id, "SUCCESS", req);
       res.status(201).json({ success: true, data: { header: cert, document: mongoDoc } });
     } catch (err) {
       await client.query("ROLLBACK");
