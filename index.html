@@ -1751,12 +1751,12 @@ async function exportCSV(page) {
       return;
     }
 
-    // Build CSV string
+   // Build CSV — semicolon separator + UTF-8 BOM for European Excel
     const escape = v => `"${String(v||'').replace(/"/g,'""')}"`;
-    const csv = [headers.map(escape).join(','), ...rows.map(r => r.map(escape).join(','))].join('');
-
-    // Download
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const sep = ';';
+    const csv = [headers.map(escape).join(sep), ...rows.map(r => r.map(escape).join(sep))].join('\r\n');
+    const BOM = '\uFEFF';
+    const blob = new Blob([BOM + csv], { type: 'text/csv;charset=utf-8;' });
     const url  = URL.createObjectURL(blob);
     const a    = document.createElement('a');
     a.href = url; a.download = filename; a.click();
