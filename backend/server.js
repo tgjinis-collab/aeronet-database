@@ -100,7 +100,7 @@ app.get("/health", async (_req, res) => {
 });
 
 // ── Serve dashboard ──────────────────────────────────────────────────────────
-app.get("/", (_req, res) => res.sendFile(path.join(__dirname, "index.html")));
+app.get("/", (_req, res) => res.sendFile(path.join(__dirname, "..", "index.html")));
 
 // ── Error handlers ────────────────────────────────────────────────────────────
 app.use((err, _req, res, _next) => {
