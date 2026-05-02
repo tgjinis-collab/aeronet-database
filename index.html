@@ -478,7 +478,7 @@ td.mono{font-family:var(--font-mono);font-size:10px}
       </div>
       <div class="panel">
         <div class="panel-head"><div class="panel-title">QC Report Log</div><span class="badge badge-blue" id="qc-count">0 reports</span></div>
-        <div class="tbl-wrap"><table><thead><tr><th>Report ID</th><th>Delivered Item</th><th>Type</th><th>Status</th><th>Created</th></tr></thead><tbody id="qc-tbody"><tr class="loading-row"><td colspan="5">LOADING...</td></tr></tbody></table></div>
+        <div class="tbl-wrap"><table><thead><tr><th>Report ID</th><th>Delivered Item</th><th>Type</th><th>Status</th><th>Created</th><th>Actions</th></tr></thead><tbody id="qc-tbody"><tr class="loading-row"><td colspan="5">LOADING...</td></tr></tbody></table></div>
       </div>
     </div>
 
@@ -1325,13 +1325,15 @@ async function loadQC(delivered_item_id = '', report_type = '', status = '') {
       options:{ ...chartBase, scales:{ x:{grid:{display:false},ticks:{...axisTick,maxRotation:15}}, y:{grid:gridStyle,ticks:axisTick} } }
     });
 
+    const isQI = getUserRole() === 'QUALITY_INSPECTOR';
     tbody.innerHTML = reports.length
-      ? reports.map(r => `<tr style="cursor:pointer" data-action="drillDown('certifications')">
+      ? reports.map(r => `<tr>
           <td class="mono primary">${shortId(r.qc_report_id)}</td>
           <td class="mono text-muted">${shortId(r.delivered_item_id)}</td>
           <td><span class="badge badge-blue">${r.report_type?.replace(/_/g,' ')}</span></td>
           <td>${statusBadge(r.current_status)}</td>
           <td class="text-muted">${fmtDate(r.created_at)}</td>
+          <td>${isQI ? qcActions(r.qc_report_id, r.current_status) : ''}</td>
         </tr>`).join('')
       : '<tr><td colspan="5" class="empty-state">No QC reports found</td></tr>';
 
@@ -1409,15 +1411,21 @@ async function loadCertifications() {
           <div class="panel-body">
             <div class="alert-strip info">ℹ Once is_immutable = TRUE, records cannot be modified. Click any row to view its version history.</div>
             ${reports.slice(0,15).map(r => `
-              <div class="cert-row" style="cursor:pointer" data-action="showVersionHistory('${r.qc_report_id}','${r.mongo_doc_ref||''}')">
-                <div style="font-size:16px">${r.current_status==='APPROVED'?'🔒':'📄'}</div>
-                <div class="cert-info">
+              <div class="cert-row">
+                <div style="font-size:16px;cursor:pointer" data-action="showVersionHistory('${r.qc_report_id}','${r.mongo_doc_ref||''}')">${r.current_status==='APPROVED'?'🔒':'📄'}</div>
+                <div class="cert-info" style="cursor:pointer" data-action="showVersionHistory('${r.qc_report_id}','${r.mongo_doc_ref||''}')">
                   <div class="cert-id">${shortId(r.qc_report_id)} — ${(r.report_type||'').replace(/_/g,' ')}</div>
                   <div class="cert-part">Delivered Item: ${shortId(r.delivered_item_id)}</div>
                 </div>
-                <div style="text-align:right">
+                <div style="text-align:right;display:flex;flex-direction:column;align-items:flex-end;gap:6px">
                   ${statusBadge(r.current_status)}
-                  <div class="text-muted" style="font-size:10px;margin-top:4px">${fmtDate(r.created_at)}</div>
+                  <div class="text-muted" style="font-size:10px">${fmtDate(r.created_at)}</div>
+                  ${getUserRole()==='QUALITY_INSPECTOR' && r.current_status==='SUBMITTED'
+                    ? `<div style="display:flex;gap:4px">
+                        <button class="btn btn-sm" style="background:var(--green);color:#fff;border:none;font-size:9px;padding:3px 8px" data-action="approveQC('${r.qc_report_id}','APPROVED')">✓ Approve</button>
+                        <button class="btn btn-sm" style="background:var(--red);color:#fff;border:none;font-size:9px;padding:3px 8px" data-action="approveQC('${r.qc_report_id}','REJECTED')">✗ Reject</button>
+                      </div>`
+                    : ''}
                 </div>
               </div>`).join('')}
           </div>
@@ -1655,6 +1663,46 @@ async function loadAlerts() {
   } catch (e) {
     if (container) container.innerHTML = `<div class="empty-state">${e.message}</div>`;
   }
+}
+
+// ── QC row action buttons ─────────────────────────────────────────────────────
+function qcActions(id, status) {
+  if (status === 'DRAFT') {
+    return `<button class="btn btn-sm" style="background:var(--cyan);color:#000;border:none;font-size:9px;padding:3px 8px"
+      data-action="updateQCStatus('${id}','SUBMITTED')">→ Submit</button>`;
+  }
+  if (status === 'SUBMITTED') {
+    return `<div style="display:flex;gap:4px">
+      <button class="btn btn-sm" style="background:var(--green);color:#fff;border:none;font-size:9px;padding:3px 8px"
+        data-action="updateQCStatus('${id}','APPROVED')">✓ Approve</button>
+      <button class="btn btn-sm" style="background:var(--red);color:#fff;border:none;font-size:9px;padding:3px 8px"
+        data-action="updateQCStatus('${id}','REJECTED')">✗ Reject</button>
+    </div>`;
+  }
+  return '';
+}
+
+async function updateQCStatus(reportId, newStatus) {
+  const summary = newStatus === 'APPROVED' ? 'Approved by inspector.'
+                : newStatus === 'REJECTED' ? 'Rejected — does not meet requirements.'
+                : 'Submitted for review.';
+  try {
+    const res = await apiFetch(`/api/qc-reports/${reportId}/status`, {
+      method: 'PATCH',
+      body: JSON.stringify({ status: newStatus, summary })
+    });
+    if (res.success) {
+      showToast(`QC report ${newStatus.toLowerCase()} successfully.`, newStatus === 'APPROVED' ? 'success' : newStatus === 'REJECTED' ? 'error' : 'info');
+      loadQC();
+    } else {
+      showToast(res.message || 'Failed to update status.', 'error');
+    }
+  } catch(e) { showToast(e.message, 'error'); }
+}
+
+async function approveQC(reportId, newStatus) {
+  await updateQCStatus(reportId, newStatus);
+  loadCertifications();
 }
 
 function exportCSV(page) { showToast('Export — connect /api endpoints with CSV serialisation for production use.', 'info'); }
@@ -1909,6 +1957,7 @@ window.showCreateOrder=showCreateOrder; window.hideCreateOrder=hideCreateOrder; 
 window.showCreateQC=showCreateQC; window.hideCreateQC=hideCreateQC; window.submitCreateQC=submitCreateQC;
 window.showCreateCert=showCreateCert; window.hideCreateCert=hideCreateCert; window.submitCreateCert=submitCreateCert;
 window.submitFlag=submitFlag;
+window.updateQCStatus=updateQCStatus; window.approveQC=approveQC; window.qcActions=qcActions;
 </script>
 </body>
 </html>
