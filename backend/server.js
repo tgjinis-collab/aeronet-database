@@ -8,7 +8,8 @@ const helmet  = require("helmet");
 const cors    = require("cors");
 const path    = require("path");
 
-const { pgPool, connectMongo } = require("./config/db");
+const { pgPool, connectMongo, getMongo } = require("./config/db");
+const { authenticate } = require("./middleware/auth");
 
 const app  = express();
 const PORT = process.env.PORT || 3000;
@@ -34,7 +35,7 @@ app.use("/api/shipments",      require("./routes/shipments.routes"));
 app.get("/api/delivered-items", authenticate, async (req, res) => {
   try {
     const { limit = 100, offset = 0 } = req.query;
-    const { rows } = await pool.query(
+    const { rows } = await pgPool.query(
       `SELECT di.delivered_item_id, di.serial_number, di.batch_number, di.shipment_id,
               di.delivery_timestamp, p.part_name, sh.tracking_number, s.business_name AS supplier_name
          FROM delivered_item di
@@ -58,13 +59,7 @@ app.use("/api/users",          require("./routes/users.routes"));
 app.use("/api/audit-logs",     require("./routes/audit.routes"));
 app.use("/api/dashboard",      require("./routes/dashboard.routes"));
 
-// Parts routes (inline — small enough not to warrant a separate file)
-const { pgPool: pool } = require("./config/db");
-const { authenticate } = require("./middleware/auth");
-const { getMongo }     = require("./config/db");
-const { uuidParam }    = require("./middleware/helpers");
-const { validate }     = require("./middleware/validate");
-const { body, param }  = require("express-validator");
+// Parts (inline — small enough not to warrant a separate file)
 
 app.get("/api/parts", authenticate, async (req, res) => {
   try {
@@ -73,14 +68,14 @@ app.get("/api/parts", authenticate, async (req, res) => {
     if (search) { params.push(`%${search}%`); sql += ` AND (part_name ILIKE $1 OR description ILIKE $1)`; }
     sql += ` ORDER BY part_name LIMIT $${params.length+1} OFFSET $${params.length+2}`;
     params.push(Number(limit), Number(offset));
-    const { rows } = await pool.query(sql, params);
+    const { rows } = await pgPool.query(sql, params);
     res.json({ success: true, data: rows });
   } catch (err) { res.status(500).json({ success: false, message: err.message }); }
 });
 
 app.get("/api/parts/:id/spec/full", authenticate, async (req, res) => {
   try {
-    const { rows } = await pool.query("SELECT * FROM part_baseline_spec WHERE part_id = $1", [req.params.id]);
+    const { rows } = await pgPool.query("SELECT * FROM part_baseline_spec WHERE part_id = $1", [req.params.id]);
     if (!rows[0]) return res.status(404).json({ success: false, message: "Spec not found." });
     const mongoDB   = getMongo();
     const mongoDoc  = mongoDB ? await mongoDB.collection("manufacturing_specs").findOne({ _pgPartRef: req.params.id }) : null;
