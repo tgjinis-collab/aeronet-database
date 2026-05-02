@@ -323,7 +323,8 @@ td.mono{font-family:var(--font-mono);font-size:10px}
     <div class="page" id="page-shipments">
       <div class="page-header">
         <div><div class="page-title">Shipment Tracking</div><div class="page-sub">Global logistics visibility</div></div>
-        <div class="header-actions"><button class="btn btn-primary btn-sm" data-action="loadShipments()">↺ Refresh</button></div>
+        <div class="header-actions"><button class="btn btn-ghost btn-sm" data-action="exportCSV('shipments')">⬇ CSV</button>
+          <button class="btn btn-primary btn-sm" data-action="loadShipments()">↺ Refresh</button></div>
       </div>
       <div class="search-bar">
         <input class="search-input" placeholder="Search by tracking number, carrier..." oninput="filterTable(this,'shipments-tbody')"/>
@@ -341,6 +342,7 @@ td.mono{font-family:var(--font-mono);font-size:10px}
         <div><div class="page-title">Purchase Orders</div><div class="page-sub">Procurement lifecycle</div></div>
         <div class="header-actions">
           <button class="btn btn-primary btn-sm" id="btn-create-order" data-action="showCreateOrder()" class="btn btn-primary btn-sm role-btn" style="display:none">+ Create Order</button>
+          <button class="btn btn-ghost btn-sm" data-action="exportCSV('orders')">⬇ CSV</button>
           <button class="btn btn-ghost btn-sm" data-action="loadOrders()">↺ Refresh</button>
         </div>
       </div>
@@ -389,7 +391,8 @@ td.mono{font-family:var(--font-mono);font-size:10px}
     <div class="page" id="page-suppliers">
       <div class="page-header">
         <div><div class="page-title">Supplier Performance</div><div class="page-sub">KPIs · Scorecards · Analytics</div></div>
-        <div class="header-actions"><button class="btn btn-primary btn-sm" data-action="loadSuppliers()">↺ Refresh</button></div>
+        <div class="header-actions"><button class="btn btn-ghost btn-sm" data-action="exportCSV('suppliers')">⬇ CSV</button>
+          <button class="btn btn-primary btn-sm" data-action="loadSuppliers()">↺ Refresh</button></div>
       </div>
       <div class="search-bar">
         <input class="search-input" placeholder="Search suppliers..." oninput="filterTable(this,'suppliers-tbody')"/>
@@ -417,6 +420,7 @@ td.mono{font-family:var(--font-mono);font-size:10px}
         <div><div class="page-title">QC Reports</div><div class="page-sub">Inspection results · Entry forms · Version history</div></div>
         <div class="header-actions">
           <button class="btn btn-primary btn-sm" id="btn-create-qc" data-action="showCreateQC()" class="btn btn-primary btn-sm role-btn" style="display:none">+ New Report</button>
+          <button class="btn btn-ghost btn-sm" data-action="exportCSV('qc')">⬇ CSV</button>
           <button class="btn btn-ghost btn-sm" data-action="loadQC()">↺ Refresh</button>
         </div>
       </div>
@@ -604,7 +608,8 @@ td.mono{font-family:var(--font-mono);font-size:10px}
     <div class="page" id="page-equipment">
       <div class="page-header">
         <div><div class="page-title">Equipment Registry</div><div class="page-sub">Manufacturing assets · IoT assignments</div></div>
-        <div class="header-actions"><button class="btn btn-primary btn-sm" data-action="loadEquipment()">↺ Refresh</button></div>
+        <div class="header-actions"><button class="btn btn-ghost btn-sm" data-action="exportCSV('equipment')">⬇ CSV</button>
+          <button class="btn btn-primary btn-sm" data-action="loadEquipment()">↺ Refresh</button></div>
       </div>
       <div class="panel">
         <div class="panel-head"><div class="panel-title">All Equipment</div><span class="badge badge-blue" id="equipment-count">0 items</span></div>
@@ -616,7 +621,8 @@ td.mono{font-family:var(--font-mono);font-size:10px}
     <div class="page" id="page-audit">
       <div class="page-header">
         <div><div class="page-title">Audit Log</div><div class="page-sub">Complete action trail · Compliance</div></div>
-        <div class="header-actions"><button class="btn btn-primary btn-sm" data-action="loadAudit()">↺ Refresh</button></div>
+        <div class="header-actions"><button class="btn btn-ghost btn-sm" data-action="exportCSV('audit')">⬇ CSV</button>
+          <button class="btn btn-primary btn-sm" data-action="loadAudit()">↺ Refresh</button></div>
       </div>
       <div class="search-bar">
         <input class="search-input" placeholder="Search audit log..." oninput="filterTable(this,'audit-tbody')"/>
@@ -1705,7 +1711,61 @@ async function approveQC(reportId, newStatus) {
   loadCertifications();
 }
 
-function exportCSV(page) { showToast('Export — connect /api endpoints with CSV serialisation for production use.', 'info'); }
+async function exportCSV(page) {
+  showToast('Preparing export...', 'info');
+  try {
+    let rows = [], filename = '', headers = [];
+
+    if (page === 'orders' || page === 'overview') {
+      const d = await apiFetch('/api/orders?limit=500');
+      headers = ['Order ID','Supplier','Order Date','Desired Delivery','Actual Delivery','Status'];
+      rows = (d.data||[]).map(o => [o.order_id, o.supplier_name||'', fmtDate(o.order_date), fmtDate(o.desired_delivery_date), fmtDate(o.actual_delivery_date)||'', o.status]);
+      filename = 'aeronetb_orders.csv';
+    } else if (page === 'qc') {
+      const d = await apiFetch('/api/qc-reports?limit=500');
+      headers = ['Report ID','Delivered Item ID','Report Type','Status','Created'];
+      rows = (d.data||[]).map(r => [r.qc_report_id, r.delivered_item_id, r.report_type, r.current_status, fmtDate(r.created_at)]);
+      filename = 'aeronetb_qc_reports.csv';
+    } else if (page === 'suppliers') {
+      const d = await apiFetch('/api/suppliers?limit=500');
+      headers = ['Supplier ID','Business Name','Contact Email','Contact Phone','Accreditation'];
+      rows = (d.data||[]).map(s => [s.supplier_id, s.business_name, s.contact_email, s.contact_phone||'', s.accreditation]);
+      filename = 'aeronetb_suppliers.csv';
+    } else if (page === 'shipments') {
+      const d = await apiFetch('/api/shipments?limit=500');
+      headers = ['Shipment ID','Order ID','Tracking Number','Carrier','Port of Entry','Dispatched','Arrived'];
+      rows = (d.data||[]).map(s => [s.shipment_id, s.order_id, s.tracking_number, s.carrier_name||'', s.port_of_entry||'', fmtDate(s.dispatched_at), fmtDate(s.arrived_at)||'']);
+      filename = 'aeronetb_shipments.csv';
+    } else if (page === 'audit') {
+      const d = await apiFetch('/api/audit-logs?limit=500');
+      headers = ['Timestamp','User','Action','Entity Type','Entity ID','Outcome'];
+      rows = (d.data||[]).map(a => [fmtDateTime(a.created_at), a.full_name||a.emp_id||'', a.action_type, a.entity_type, a.entity_id||'', a.outcome]);
+      filename = 'aeronetb_audit_log.csv';
+    } else if (page === 'equipment') {
+      const d = await apiFetch('/api/equipment');
+      headers = ['Equipment ID','Name','Type','Facility','Manufacturer','Model','Installed','Active'];
+      rows = (d.data||[]).map(e => [e.equipment_id, e.equipment_name, e.equipment_type, e.facility_plant||'', e.manufacturer||'', e.model_number||'', fmtDate(e.install_date), e.is_active?'Yes':'No']);
+      filename = 'aeronetb_equipment.csv';
+    } else {
+      showToast('Export not available for this page.', 'info');
+      return;
+    }
+
+    // Build CSV string
+    const escape = v => `"${String(v||'').replace(/"/g,'""')}"`;
+    const csv = [headers.map(escape).join(','), ...rows.map(r => r.map(escape).join(','))].join('');
+
+    // Download
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href = url; a.download = filename; a.click();
+    URL.revokeObjectURL(url);
+    showToast(`Exported ${rows.length} rows to ${filename}`, 'success');
+  } catch(e) {
+    showToast('Export failed: ' + e.message, 'error');
+  }
+}
 
 // ── CREATE ORDER (Procurement Officer) ────────────────────────────────────────
 function showCreateOrder() {
