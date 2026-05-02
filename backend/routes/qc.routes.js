@@ -108,8 +108,16 @@ router.patch("/:id/status", authenticate, authorize("QUALITY_INSPECTOR"),
         try {
           await mongoDB.collection("qc_reports").updateOne(
             { _pgRef: req.params.id },
-            { $set: { current_status: status, updatedAt: new Date() },
-              $push: { versions: { versionNo: Date.now(), createdAt: new Date(), createdBy: { _pgEmpId: req.user.emp_id }, status, summary, resultSnapshot: resultSnapshot || {} } } }
+            [{ $set: {
+              current_status: status,
+              updatedAt: new Date(),
+              versions: { $concatArrays: [
+                "$versions",
+                [{ versionNo: { $add: [{ $size: "$versions" }, 1] },
+                   createdAt: new Date(), createdBy: { _pgEmpId: req.user.emp_id },
+                   status, summary, resultSnapshot: resultSnapshot || {} }]
+              ]}
+            }}]
           );
         } catch (e) { console.warn("MongoDB QC update (non-fatal):", e.message); }
       }
