@@ -1965,9 +1965,18 @@ async function submitFlag() {
   if (errEl) errEl.textContent = '';
 }
 
+function updateClock() {
+  const el = document.getElementById('clock');
+  if (!el) return;
+  const now = new Date();
+  el.textContent = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+}
 
 // ── SAFE EVENT BINDING (replaces all onclick attributes) ─────────────────────
 document.addEventListener('DOMContentLoaded', function() {
+  updateClock();
+  setInterval(updateClock, 1000);
+
   document.body.addEventListener('click', function(e) {
     var el = e.target.closest('[data-action]');
     if (!el) return;
