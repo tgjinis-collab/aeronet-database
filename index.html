@@ -535,21 +535,41 @@ td.mono{font-family:var(--font-mono);font-size:10px}
             <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
               <div>
                 <label style="font-size:9px;letter-spacing:2px;color:var(--text3);text-transform:uppercase;display:block;margin-bottom:6px">Entity Type</label>
-                <select id="flag-entity-type" class="filter-select" style="width:100%">
-                  <option>CERTIFICATION</option>
-                  <option>QC_REPORT</option>
-                  <option>SHIPMENT</option>
-                  <option>SUPPLIER</option>
+                <select id="flag-entity-type" class="filter-select" style="width:100%" onchange="loadFlagEntityOptions(this.value)">
+                  <option value="CERTIFICATION">Certification</option>
+                  <option value="QC_REPORT">QC Report</option>
+                  <option value="SHIPMENT">Shipment</option>
+                  <option value="SUPPLIER">Supplier</option>
+                  <option value="DELIVERED_ITEM">Delivered Item</option>
                 </select>
               </div>
               <div>
-                <label style="font-size:9px;letter-spacing:2px;color:var(--text3);text-transform:uppercase;display:block;margin-bottom:6px">Entity ID</label>
-                <input id="flag-entity-id" type="text" class="search-input" placeholder="UUID of record to flag..." style="width:100%;margin-bottom:0"/>
+                <label style="font-size:9px;letter-spacing:2px;color:var(--text3);text-transform:uppercase;display:block;margin-bottom:6px">Record</label>
+                <select id="flag-entity-id" class="filter-select" style="width:100%">
+                  <option value="">— select entity type first —</option>
+                </select>
+                <div id="flag-entity-loading" style="display:none;font-size:9px;color:var(--text3);margin-top:4px;letter-spacing:1px">LOADING OPTIONS...</div>
+              </div>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px">
+              <div>
+                <label style="font-size:9px;letter-spacing:2px;color:var(--text3);text-transform:uppercase;display:block;margin-bottom:6px">Severity</label>
+                <select id="flag-severity" class="filter-select" style="width:100%">
+                  <option value="LOW">Low</option>
+                  <option value="MEDIUM" selected>Medium</option>
+                  <option value="HIGH">High</option>
+                  <option value="CRITICAL">Critical</option>
+                </select>
+              </div>
+              <div style="display:flex;align-items:flex-end">
+                <div style="font-size:9px;color:var(--text3);letter-spacing:1px;line-height:1.6">
+                  CRITICAL — immediate action<br>HIGH — urgent review<br>MEDIUM — standard review<br>LOW — informational
+                </div>
               </div>
             </div>
             <div style="margin-bottom:12px">
               <label style="font-size:9px;letter-spacing:2px;color:var(--text3);text-transform:uppercase;display:block;margin-bottom:6px">Non-Compliance Reason</label>
-              <textarea id="flag-reason" rows="2" class="search-input" placeholder="Describe the non-compliance issue..." style="width:100%;resize:vertical;margin-bottom:0"></textarea>
+              <textarea id="flag-reason" rows="3" class="search-input" placeholder="Describe the non-compliance finding in detail — reference regulation, standard, or inspection result..." style="width:100%;resize:vertical;margin-bottom:0"></textarea>
             </div>
             <div id="flag-error" style="color:var(--red);font-size:10px;margin-bottom:8px;min-height:14px"></div>
             <button class="btn btn-sm" style="background:var(--red);color:#fff;border:none" data-action="submitFlag()">⚑ Submit Flag</button>
@@ -1951,32 +1971,80 @@ async function submitCreateCert() {
 }
 
 // ── FLAG NON-COMPLIANCE (Auditor) ─────────────────────────────────────────────
+
+// Load entity options into the dropdown when entity type changes
+async function loadFlagEntityOptions(entityType) {
+  const select  = document.getElementById('flag-entity-id');
+  const loading = document.getElementById('flag-entity-loading');
+  if (!select) return;
+  select.innerHTML = '<option value="">Loading...</option>';
+  select.disabled  = true;
+  if (loading) loading.style.display = 'block';
+  if (!entityType) {
+    select.innerHTML = '<option value="">— select entity type first —</option>';
+    select.disabled  = false;
+    if (loading) loading.style.display = 'none';
+    return;
+  }
+  try {
+    const res = await apiFetch('/api/audit-logs/flags/entity-options?type=' + entityType);
+    if (!res.success || !res.data.length) {
+      select.innerHTML = '<option value="">No records found</option>';
+      select.disabled  = false;
+      if (loading) loading.style.display = 'none';
+      return;
+    }
+    select.innerHTML = '<option value="">— select a record —</option>' +
+      res.data.map(row =>
+        `<option value="${row.id}">[${row.id.substring(0,8)}] ${row.label}</option>`
+      ).join('');
+    select.disabled = false;
+    if (loading) loading.style.display = 'none';
+  } catch (err) {
+    select.innerHTML = '<option value="">Error loading options</option>';
+    select.disabled  = false;
+    if (loading) loading.style.display = 'none';
+    console.error('loadFlagEntityOptions error:', err);
+  }
+}
+
 async function submitFlag() {
   const entityType = document.getElementById('flag-entity-type')?.value;
-  const entityId   = document.getElementById('flag-entity-id')?.value.trim();
+  const entityId   = document.getElementById('flag-entity-id')?.value;
+  const severity   = document.getElementById('flag-severity')?.value || 'MEDIUM';
   const reason     = document.getElementById('flag-reason')?.value.trim();
   const errEl      = document.getElementById('flag-error');
   if (errEl) errEl.textContent = '';
-  if (!entityId) { if(errEl) errEl.textContent = 'Entity ID is required.'; return; }
-  if (!reason)   { if(errEl) errEl.textContent = 'Please provide a reason.'; return; }
-  showToast('Non-compliance flag recorded for ' + entityType + '.', 'warning');
-  if (document.getElementById('flag-entity-id')) document.getElementById('flag-entity-id').value = '';
-  if (document.getElementById('flag-reason'))    document.getElementById('flag-reason').value    = '';
-  if (errEl) errEl.textContent = '';
+  if (!entityId) { if(errEl) errEl.textContent = 'Please select a record to flag.'; return; }
+  if (!reason)   { if(errEl) errEl.textContent = 'Please provide a non-compliance reason.'; return; }
+  try {
+    const res = await apiFetch('/api/audit-logs/flags', {
+      method: 'POST',
+      body: JSON.stringify({ entity_type: entityType, entity_id: entityId, severity, reason })
+    });
+    if (res.success) {
+      showToast('Non-compliance flag raised (' + severity + ') for ' + entityType + '.', 'warning');
+      // Reset form
+      const selType = document.getElementById('flag-entity-type');
+      const selId   = document.getElementById('flag-entity-id');
+      const selSev  = document.getElementById('flag-severity');
+      const txtReason = document.getElementById('flag-reason');
+      if (selId)     { selId.innerHTML = '<option value="">— select entity type first —</option>'; }
+      if (selSev)    selSev.value   = 'MEDIUM';
+      if (txtReason) txtReason.value = '';
+      if (errEl)     errEl.textContent = '';
+    } else {
+      const detail = res.errors ? res.errors.map(e => e.msg).join(', ') : (res.message || 'Failed to raise flag.');
+      if (errEl) errEl.textContent = detail;
+    }
+  } catch(e) {
+    if (errEl) errEl.textContent = e.message;
+  }
 }
 
-function updateClock() {
-  const el = document.getElementById('clock');
-  if (!el) return;
-  const now = new Date();
-  el.textContent = now.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit', second: '2-digit' });
-}
 
 // ── SAFE EVENT BINDING (replaces all onclick attributes) ─────────────────────
 document.addEventListener('DOMContentLoaded', function() {
-  updateClock();
-  setInterval(updateClock, 1000);
-
   document.body.addEventListener('click', function(e) {
     var el = e.target.closest('[data-action]');
     if (!el) return;
@@ -2025,7 +2093,7 @@ window.showVersionHistory=showVersionHistory;
 window.showCreateOrder=showCreateOrder; window.hideCreateOrder=hideCreateOrder; window.submitCreateOrder=submitCreateOrder;
 window.showCreateQC=showCreateQC; window.hideCreateQC=hideCreateQC; window.submitCreateQC=submitCreateQC;
 window.showCreateCert=showCreateCert; window.hideCreateCert=hideCreateCert; window.submitCreateCert=submitCreateCert;
-window.submitFlag=submitFlag;
+window.submitFlag=submitFlag; window.loadFlagEntityOptions=loadFlagEntityOptions;
 window.updateQCStatus=updateQCStatus; window.approveQC=approveQC; window.qcActions=qcActions;
 </script>
 </body>
